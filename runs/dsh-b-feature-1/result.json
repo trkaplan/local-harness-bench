@@ -1,0 +1,1 @@
+{"harness":"dsh","task":"b-feature","run":1,"exit":0,"wall_s":213,"llm_calls":38,"prompt_tokens":640831,"completion_tokens":12820,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"18 passed in 0.03s","external_conns":0,"started":"2026-11-08T13:31:21"}

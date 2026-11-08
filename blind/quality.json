@@ -1,0 +1,370 @@
+[
+ {
+  "h": "dsh",
+  "task": "a-bugfix",
+  "run": "dsh-a-bugfix-2",
+  "sid": "S01",
+  "scores": [
+   2,
+   2,
+   1,
+   2,
+   2,
+   2
+  ],
+  "total": 11,
+  "totals": [
+   11,
+   11
+  ],
+  "wall": 132,
+  "calls": 25,
+  "ptok": 288965,
+  "ctok": 7678
+ },
+ {
+  "h": "mini",
+  "task": "a-bugfix",
+  "run": "mini-a-bugfix-1",
+  "sid": "S02",
+  "scores": [
+   2,
+   2,
+   2,
+   0.5,
+   2,
+   1
+  ],
+  "total": 9.5,
+  "totals": [
+   9,
+   10
+  ],
+  "wall": 43,
+  "calls": 9,
+  "ptok": 40884,
+  "ctok": 2447
+ },
+ {
+  "h": "mini",
+  "task": "a-bugfix",
+  "run": "mini-a-bugfix-2",
+  "sid": "S03",
+  "scores": [
+   2,
+   2,
+   2,
+   1,
+   2,
+   1
+  ],
+  "total": 10,
+  "totals": [
+   10,
+   10
+  ],
+  "wall": 41,
+  "calls": 11,
+  "ptok": 42917,
+  "ctok": 2191
+ },
+ {
+  "h": "opencode",
+  "task": "a-bugfix",
+  "run": "opencode-a-bugfix-2",
+  "sid": "S04",
+  "scores": [
+   2,
+   2,
+   2,
+   1,
+   2,
+   1
+  ],
+  "total": 10,
+  "totals": [
+   10,
+   10
+  ],
+  "wall": 40,
+  "calls": 10,
+  "ptok": 94544,
+  "ctok": 2048
+ },
+ {
+  "h": "opencode",
+  "task": "a-bugfix",
+  "run": "opencode-a-bugfix-1",
+  "sid": "S05",
+  "scores": [
+   2,
+   2,
+   2,
+   1,
+   1,
+   1
+  ],
+  "total": 9,
+  "totals": [
+   9,
+   9
+  ],
+  "wall": 40,
+  "calls": 11,
+  "ptok": 110212,
+  "ctok": 2544
+ },
+ {
+  "h": "dsh",
+  "task": "a-bugfix",
+  "run": "dsh-a-bugfix-1",
+  "sid": "S06",
+  "scores": [
+   1,
+   2,
+   1,
+   2,
+   0,
+   1.5
+  ],
+  "total": 7.5,
+  "totals": [
+   8,
+   7
+  ],
+  "wall": 114,
+  "calls": 26,
+  "ptok": 315854,
+  "ctok": 7512
+ },
+ {
+  "h": "pi",
+  "task": "a-bugfix",
+  "run": "pi-a-bugfix-1",
+  "sid": "S07",
+  "scores": [
+   2,
+   2,
+   2,
+   1,
+   2,
+   1
+  ],
+  "total": 10,
+  "totals": [
+   10,
+   10
+  ],
+  "wall": 26,
+  "calls": 9,
+  "ptok": 29538,
+  "ctok": 1859
+ },
+ {
+  "h": "pi",
+  "task": "a-bugfix",
+  "run": "pi-a-bugfix-2",
+  "sid": "S08",
+  "scores": [
+   2,
+   2,
+   2,
+   0.5,
+   1,
+   1
+  ],
+  "total": 8.5,
+  "totals": [
+   8,
+   9
+  ],
+  "wall": 30,
+  "calls": 9,
+  "ptok": 29337,
+  "ctok": 1792
+ },
+ {
+  "h": "dsh",
+  "task": "b-feature",
+  "run": "dsh-b-feature-2",
+  "sid": "S01",
+  "scores": [
+   1,
+   2,
+   0.5,
+   1,
+   1,
+   1
+  ],
+  "total": 6.5,
+  "totals": [
+   7,
+   6
+  ],
+  "wall": 205,
+  "calls": 33,
+  "ptok": 519295,
+  "ctok": 11843
+ },
+ {
+  "h": "dsh",
+  "task": "b-feature",
+  "run": "dsh-b-feature-1",
+  "sid": "S02",
+  "scores": [
+   2,
+   2,
+   0,
+   1,
+   0,
+   1
+  ],
+  "total": 6,
+  "totals": [
+   6,
+   6
+  ],
+  "wall": 213,
+  "calls": 38,
+  "ptok": 640831,
+  "ctok": 12820
+ },
+ {
+  "h": "mini",
+  "task": "b-feature",
+  "run": "mini-b-feature-2",
+  "sid": "S03",
+  "scores": [
+   2,
+   1,
+   2,
+   2,
+   1,
+   1
+  ],
+  "total": 9,
+  "totals": [
+   9,
+   9
+  ],
+  "wall": 63,
+  "calls": 11,
+  "ptok": 57665,
+  "ctok": 3732
+ },
+ {
+  "h": "opencode",
+  "task": "b-feature",
+  "run": "opencode-b-feature-1",
+  "sid": "S04",
+  "scores": [
+   1,
+   1,
+   2,
+   2,
+   2,
+   2
+  ],
+  "total": 10,
+  "totals": [
+   10,
+   10
+  ],
+  "wall": 81,
+  "calls": 17,
+  "ptok": 212204,
+  "ctok": 4961
+ },
+ {
+  "h": "pi",
+  "task": "b-feature",
+  "run": "pi-b-feature-2",
+  "sid": "S05",
+  "scores": [
+   1,
+   1,
+   2,
+   2,
+   2,
+   2
+  ],
+  "total": 10,
+  "totals": [
+   10,
+   10
+  ],
+  "wall": 70,
+  "calls": 19,
+  "ptok": 95787,
+  "ctok": 4143
+ },
+ {
+  "h": "opencode",
+  "task": "b-feature",
+  "run": "opencode-b-feature-2",
+  "sid": "S06",
+  "scores": [
+   1,
+   2,
+   2,
+   2,
+   2,
+   2
+  ],
+  "total": 11,
+  "totals": [
+   11,
+   11
+  ],
+  "wall": 92,
+  "calls": 21,
+  "ptok": 261157,
+  "ctok": 5007
+ },
+ {
+  "h": "pi",
+  "task": "b-feature",
+  "run": "pi-b-feature-1",
+  "sid": "S07",
+  "scores": [
+   1,
+   1,
+   2,
+   2,
+   2,
+   2
+  ],
+  "total": 10,
+  "totals": [
+   10,
+   10
+  ],
+  "wall": 62,
+  "calls": 18,
+  "ptok": 83136,
+  "ctok": 3981
+ },
+ {
+  "h": "mini",
+  "task": "b-feature",
+  "run": "mini-b-feature-1",
+  "sid": "S08",
+  "scores": [
+   2,
+   1,
+   2,
+   2,
+   2,
+   2
+  ],
+  "total": 11,
+  "totals": [
+   11,
+   11
+  ],
+  "wall": 59,
+  "calls": 11,
+  "ptok": 57500,
+  "ctok": 3843
+ }
+]

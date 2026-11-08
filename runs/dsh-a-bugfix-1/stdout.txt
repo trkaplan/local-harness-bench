@@ -1,0 +1,26 @@
+All three bugs are fixed and verified. **8/8 tests pass** (`python -m pytest -q`), with only `ledger/core.py` and `tests/test_core.py` modified — no public names or signatures changed.
+
+## Fixes
+
+**1. `parse_amount` sign handling** — the original guard was `startswith("(") and endswith(")")`, so `-(45.00)` matched *neither* sign branch and fell through to `Decimal("(45.00")`.
+
+Worth flagging: my first attempt at this fix was itself wrong. Reordering to check `(`-prefix alone still let `-(45.00)` slip past, because `"-("` doesn't *start* with `(`; the minus got stripped and `Decimal` raised `InvalidOperation`, which subclasses `ArithmeticError`, **not** `ValueError` — so the test failed for a non-obvious reason. The restructured version strips a leading minus first, then treats parentheses as the alternative sign form, rejecting the combination explicitly. It also raises `ValueError` for `(45.00)-`, `(-45.00)`, and unbalanced parens instead of leaking a decimal error.
+
+**2. `Ledger.between`** — `< end` → `<= end`, matching the documented inclusive contract.
+
+**3. `monthly_totals`** — `f"{year}-{month}"` → `f"{year:04d}-{month:02d}"`. The padding also repairs the ordering: previously `2026-3` sorted *after* `2026-10` as a string, so the existing `sorted()` produced wrong chronology.
+
+**4. `apply_discount`** — confirmed already correct (`16.9915 → 16.99`); left untouched.
+
+## On the tests
+
+I checked each new test against the original code to make sure it's a genuine regression test — all three fail before the fix and pass after, rather than passing vacuously:
+
+```
+FAILED test_parse_amount_accounting_negative_not_combined_with_minus
+FAILED test_between_includes_entries_on_end_date
+FAILED test_monthly_totals_keys_zero_padded_and_sorted
+3 failed, 5 passed
+```
+
+One deliberate scoping decision: non-numeric input (`"abc"`, `""`) still raises `InvalidOperation` rather than `ValueError`. That is pre-existing behavior outside the reported bugs, so I kept the blast radius small and did not assert on it. If the finance team wants all malformed input to raise `ValueError`, wrapping the final `Decimal(s)` in a `try/except InvalidOperation` would be a clean follow-up — say the word and I'll add it.

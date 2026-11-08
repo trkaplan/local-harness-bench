@@ -1,0 +1,23 @@
+Done. **14 passed** (3 pre-existing + 11 new).
+
+## Changes
+
+| File | Change |
+|---|---|
+| `todo/sqlite_store.py` *(new)* | `SqliteStore(path)` — `load`/`save`/`next_id`, stdlib `sqlite3` only; `tasks` table with the required columns, `tags` JSON-encoded; `save()` does `DELETE` + `executemany` inside one `with conn` transaction (full replace, rolls back on error) |
+| `todo/storage.py` | `open_store(path)` factory: `.json` → `JsonStore`, else `SqliteStore` |
+| `todo/cli.py` | default `~/.todo.db` (still `TODO_FILE`-overridable); uses `open_store`; new `rename ID TITLE` and `migrate SRC DST` |
+| `todo/service.py` | `rename(task_id, new_title)` → updated `Task`, `KeyError` on unknown id |
+| `tests/test_sqlite.py` *(new)* | 11 tests, one focus per requirement |
+| `README.md` | new default + backend-by-extension + `migrate`/`rename` |
+
+## Requirement → test coverage (each verified by mutation)
+
+1. **SqliteStore** — `test_sqlite_roundtrip_preserves_fields` (fields, tags JSON, `next_id` = max+1 / 1 when empty), `test_sqlite_schema` (table/column names, PK, NOT NULLs, `DEFAULT 0`), `test_sqlite_save_replaces_atomically` (full replace; a mid-save `IntegrityError` leaves prior contents intact). Mutating nullability/defaults, table name, tags encoding, done encoding, or making `save` non-atomic each failed tests.
+2. **Factory** — `test_open_store_factory_picks_backend`; forcing either branch failed it.
+3. **CLI default + factory use** — `test_cli_default_file_is_sqlite` (default and `TODO_FILE` override); reverting the default or bypassing `open_store` failed tests.
+4. **migrate** — `test_migrate_json_to_sqlite` (count message + preserved ids/done/created_at/tags), `test_migrate_sqlite_to_json` (reverse direction), `test_migrate_rejects_non_empty_destination` (exit 1, stderr message, destination untouched). Stubbing the command, reversing order, hardcoding backends, or dropping the guard each failed.
+5. **rename** — `test_rename_updates_title` (return value, persistence, `KeyError`) and `test_cli_rename` (`renamed #ID`, unknown id → 1). Dropping the assignment, the `KeyError`, or changing the output each failed.
+6. Existing tests untouched and passing; README updated.
+
+One note worth flagging: `save()` opens a fresh connection per call and re-runs `CREATE TABLE IF NOT EXISTS`, matching `JsonStore`'s stateless, rewrite-everything style; ordering on load is by `id`, which matches insertion order in practice.

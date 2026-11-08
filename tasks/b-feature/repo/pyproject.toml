@@ -1,0 +1,11 @@
+[project]
+name = "todo"
+version = "0.3.0"
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+todo = "todo.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

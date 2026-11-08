@@ -1,0 +1,16 @@
+All done. Full test suite passes (14 passed). Summary of changes:
+
+- **`todo/sqlite_store.py`** (new): `SqliteStore(path)` with `load()`, `save()` (atomic full replacement — `DELETE` + `INSERT`s in one transaction via the `sqlite3` connection context manager), and `next_id()` identical to `JsonStore`. Table `tasks` with the specified schema; `tags` stored as JSON-encoded text. Stdlib only.
+
+- **`todo/storage.py`**: added `open_store(path)` factory — `.json` → `JsonStore`, otherwise `SqliteStore`.
+
+- **`todo/cli.py`**:
+  - `--file` default is now `~/.todo.db` (still overridable via `TODO_FILE`); service built via `open_store`, so `--file x.json` still uses JSON.
+  - New `rename ID TITLE` subcommand printing `renamed #ID` (exit 1 + `no task #ID` on stderr for unknown ids).
+  - New `migrate SRC DST` subcommand: refuses with exit code 1 and `destination not empty` on stderr if the destination has tasks (without touching it), otherwise copies all tasks preserving ids/done/created_at/tags and prints `migrated N tasks`.
+
+- **`todo/service.py`**: added `TodoService.rename(task_id, new_title)` returning the updated `Task`, raising `KeyError` for unknown ids.
+
+- **`tests/test_sqlite.py`** (new): 12 tests covering SQLite roundtrip/replacement/next_id, factory selection, JSON→SQLite and SQLite→JSON migration with field preservation, non-empty destination rejection (destination unchanged), rename via service and CLI, and unknown-id errors.
+
+- **`README.md`**: documents the SQLite default, extension-based backend selection, `rename`, and `migrate`.

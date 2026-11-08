@@ -1,0 +1,239 @@
+[0m
+> build · qwen-flash-next
+[0m$ [0mfind . -type f -name "*.py" -o -name "*.md" -o -name "*.toml" -o -name "*.cfg" | grep -v ".git/" | head -50
+./.pytest_cache/README.md
+./pyproject.toml
+./tests/test_service.py
+./todo/service.py
+./todo/models.py
+./todo/__init__.py
+./todo/cli.py
+./todo/storage.py
+./README.md
+> build · qwen-flash-next
+[0m→ [0mRead todo/models.py 
+[0m→ [0mRead todo/service.py 
+[0m→ [0mRead todo/storage.py 
+[0m→ [0mRead todo/cli.py 
+> build · qwen-flash-next
+[0m→ [0mRead README.md 
+[0m→ [0mRead tests/test_service.py 
+[0m→ [0mRead todo/__init__.py 
+[0m→ [0mRead pyproject.toml 
+> build · qwen-flash-next
+[0m← [0mWrite todo/sqlite_store.py
+Created file successfully: todo/sqlite_store.py
+> build · qwen-flash-next
+[0m← [0mEdit todo/storage.py
+Index: todo/storage.py
+===================================================================
+--- todo/storage.py
++++ todo/storage.py
+@@ -20,4 +20,13 @@
+         self.path.write_text(json.dumps([t.to_dict() for t in tasks], indent=2))
+ 
+     def next_id(self, tasks: list[Task]) -> int:
+         return (max((t.id for t in tasks), default=0) + 1)
++
++
++def open_store(path: str | Path):
++    """Return a JsonStore for *.json paths, a SqliteStore otherwise."""
++    path = Path(path)
++    if path.suffix == ".json":
++        return JsonStore(path)
++    from .sqlite_store import SqliteStore
++    return SqliteStore(path)
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/service.py
+Index: todo/service.py
+===================================================================
+--- todo/service.py
++++ todo/service.py
+@@ -29,8 +29,17 @@
+                 self.store.save(tasks)
+                 return t
+         raise KeyError(task_id)
+ 
++    def rename(self, task_id: int, new_title: str) -> Task:
++        tasks = self.store.load()
++        for t in tasks:
++            if t.id == task_id:
++                t.title = new_title
++                self.store.save(tasks)
++                return t
++        raise KeyError(task_id)
++
+     def remove(self, task_id: int) -> None:
+         tasks = self.store.load()
+         new = [t for t in tasks if t.id != task_id]
+         if len(new) == len(tasks):
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -2,18 +2,18 @@
+ import argparse
+ import os
+ import sys
+ from pathlib import Path
+-from .storage import JsonStore
++from .storage import open_store
+ from .service import TodoService
+ 
+ 
+ def default_path() -> Path:
+-    return Path(os.environ.get("TODO_FILE", Path.home() / ".todo.json"))
++    return Path(os.environ.get("TODO_FILE", Path.home() / ".todo.db"))
+ 
+ 
+ def build_service(args) -> TodoService:
+-    return TodoService(JsonStore(Path(args.file)))
++    return TodoService(open_store(Path(args.file)))
+ 
+ 
+ def main(argv: list[str] | None = None) -> int:
+     p = argparse.ArgumentParser(prog="todo")
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -22,9 +22,19 @@
+     a = sub.add_parser("add"); a.add_argument("title"); a.add_argument("--tag", action="append", default=[])
+     l = sub.add_parser("list"); l.add_argument("--all", action="store_true"); l.add_argument("--tag")
+     d = sub.add_parser("done"); d.add_argument("id", type=int)
+     r = sub.add_parser("rm"); r.add_argument("id", type=int)
++    n = sub.add_parser("rename"); n.add_argument("id", type=int); n.add_argument("title")
++    m = sub.add_parser("migrate"); m.add_argument("src"); m.add_argument("dst")
+     args = p.parse_args(argv)
++    if args.cmd == "migrate":
++        src, dst = open_store(args.src), open_store(args.dst)
++        if dst.load():
++            print("destination not empty", file=sys.stderr); return 1
++        tasks = src.load()
++        dst.save(tasks)
++        print(f"migrated {len(tasks)} tasks")
++        return 0
+     svc = build_service(args)
+     if args.cmd == "add":
+         t = svc.add(args.title, args.tag)
+         print(f"added #{t.id}: {t.title}")
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -54,8 +54,14 @@
+             svc.remove(args.id)
+         except KeyError:
+             print(f"no task #{args.id}", file=sys.stderr); return 1
+         print(f"removed #{args.id}")
++    elif args.cmd == "rename":
++        try:
++            svc.rename(args.id, args.title)
++        except KeyError:
++            print(f"no task #{args.id}", file=sys.stderr); return 1
++        print(f"renamed #{args.id}")
+     return 0
+ 
+ 
+ if __name__ == "__main__":
+
+> build · qwen-flash-next
+[0m← [0mWrite tests/test_sqlite_storage.py
+Created file successfully: tests/test_sqlite_storage.py
+> build · qwen-flash-next
+[0m← [0mEdit tests/test_sqlite_storage.py
+Index: tests/test_sqlite_storage.py
+===================================================================
+--- tests/test_sqlite_storage.py
++++ tests/test_sqlite_storage.py
+@@ -25,9 +25,8 @@
+ 
+ def test_sqlite_save_replaces_contents(tmp_path: Path):
+     store = SqliteStore(tmp_path / "t.db")
+     TodoService(store).add("old")
+-    TodoService(store).save = None  # ensure save() is the store's own overwrite
+     from todo.models import Task
+     store.save([Task(id=9, title="new", done=False, created_at="x", tags=[])])
+     assert [t.title for t in store.load()] == ["new"]
+ 
+
+> build · qwen-flash-next
+[0m← [0mEdit tests/test_sqlite_storage.py
+Index: tests/test_sqlite_storage.py
+===================================================================
+--- tests/test_sqlite_storage.py
++++ tests/test_sqlite_storage.py
+@@ -80,9 +80,8 @@
+ def test_migrate_non_empty_destination_fails(tmp_path: Path, capsys):
+     from todo.cli import main
+     src, dst = tmp_path / "s.json", tmp_path / "d.db"
+     assert main(["--file", str(src), "add", "one"]) == 0
+-    SqliteStore(dst).save(SqliteStore(Path("/nonexistent")).load() or [])
+     TodoService(SqliteStore(dst)).add("existing")
+     before = SqliteStore(dst).load()
+     assert main(["migrate", str(src), str(dst)]) == 1
+     err = capsys.readouterr().err
+
+> build · qwen-flash-next
+[0m← [0mEdit tests/test_sqlite_storage.py
+Index: tests/test_sqlite_storage.py
+===================================================================
+--- tests/test_sqlite_storage.py
++++ tests/test_sqlite_storage.py
+@@ -1,5 +1,4 @@
+-import json
+ import sqlite3
+ from pathlib import Path
+ import pytest
+ from todo.storage import JsonStore, open_store
+
+> build · qwen-flash-next
+[0m← [0mWrite README.md
+Wrote file successfully: README.md
+> build · qwen-flash-next
+[0m$ [0m$HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q
+.............                                                            [100%]
+13 passed in 0.03s
+> build · qwen-flash-next
+[0m$ [0mcd /private/var/folders/qd/_z4p4bvs2kn8nkzg42zmkpsc0000gn/T && rm -rf tododemo && mkdir tododemo && cd tododemo && R=$HOME/local-ai/harness/runs/opencode-b-feature-r2/repo && P=$HOME/local-ai/harness/tasks/.venv/bin/python && $P -m todo.cli --file s.json add "hello" --tag work && $P -m todo.cli --file s.json complete 1 && $P -m todo.cli migrate s.json d.db && $P -m todo.cli --file d.db list --all && $P -m todo.cli --file d.db rename 1 "hello again" && $P -m todo.cli migrate s.json d.db; echo "exit=$?"; $P -c "import sqlite3; print(sqlite3.connect('d.db').execute('select * from tasks').fetchall())"
+$HOME/local-ai/harness/tasks/.venv/bin/python: Error while finding module specification for 'todo.cli' (ModuleNotFoundError: No module named 'todo')
+exit=1
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+sqlite3.OperationalError: no such table: tasks
+> build · qwen-flash-next
+[0m$ [0mcd /private/var/folders/qd/_z4p4bvs2kn8nkzg42zmkpsc0000gn/T && rm -rf tododemo && mkdir tododemo && cd tododemo && R=$HOME/local-ai/harness/runs/opencode-b-feature-r2/repo && P=$HOME/local-ai/harness/tasks/.venv/bin/python && PYTHONPATH=$R $P -m todo.cli --file s.json add "hello" --tag work && PYTHONPATH=$R $P -m todo.cli --file s.json complete 1 && PYTHONPATH=$R $P -m todo.cli migrate s.json d.db && PYTHONPATH=$R $P -m todo.cli --file d.db list --all && PYTHONPATH=$R $P -m todo.cli --file d.db rename 1 "hello again"; echo "rename exit=$?"; PYTHONPATH=$R $P -m todo.cli migrate s.json d.db; echo "migrate exit=$?"; $P -c "import sqlite3; print(sqlite3.connect('d.db').execute('select * from tasks').fetchall())"
+added #1: hello
+usage: todo [-h] [--file FILE] {add,list,done,rm,rename,migrate} ...
+todo: error: argument cmd: invalid choice: 'complete' (choose from add, list, done, rm, rename, migrate)
+rename exit=2
+migrated 1 tasks
+migrate exit=0
+[(1, 'hello', 0, '2026-11-08T20:09:39.586303+00:00', '["work"]')]
+> build · qwen-flash-next
+[0m$ [0mcd /private/var/folders/qd/_z4p4bvs2kn8nkzg42zmkpsc0000gn/T && rm -rf tododemo && mkdir tododemo && cd tododemo && R=$HOME/local-ai/harness/runs/opencode-b-feature-r2/repo && P=$HOME/local-ai/harness/tasks/.venv/bin/python && export PYTHONPATH=$R && $P -m todo.cli --file s.json add "hello" --tag work && $P -m todo.cli --file s.json done 1 && $P -m todo.cli migrate s.json d.db && $P -m todo.cli --file d.db list --all && $P -m todo.cli --file d.db rename 1 "hello again" && $P -m todo.cli --file d.db rename 99 "x"; echo "rename-unknown exit=$?"; $P -m todo.cli migrate s.json d.db; echo "migrate-dst-busy exit=$?"; $P -c "import sqlite3; print(sqlite3.connect('d.db').execute('select * from tasks').fetchall())"; cd .. && rm -rf tododemo
+added #1: hello
+done #1
+migrated 1 tasks
+[x] #1 hello [work]
+renamed #1
+no task #99
+rename-unknown exit=1
+destination not empty
+migrate-dst-busy exit=1
+[(1, 'hello again', 1, '2026-11-08T20:09:44.466852+00:00', '["work"]')]
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-r2/repo && $HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q
+.............                                                            [100%]
+13 passed in 0.02s
+> build · qwen-flash-next

@@ -1,0 +1,134 @@
+{
+  "S01": {
+    "scores": [1, 1, 2, 2, 2, 2],
+    "notes": [
+      "SqliteStore uses `with self._connect() as conn:` which commits but never closes the connection; load() also creates the DB file on read (no exists() guard).",
+      "Reqs 1,2,4,5 covered; req 3 (default ~/.todo.db / TODO_FILE override) has no test, only `--file t.db` paths are exercised.",
+      "Eight tests each with a distinct purpose; roundtrip folds in the save-replaces check behind a comment but all assertions are meaningful.",
+      "README: 14 added lines, default, --file/TODO_FILE, .json rule, rename and migrate (incl. non-empty failure); fits the terse voice.",
+      "Only requested changes; `_migrate` helper is small and serves req 4.",
+      "Matches module style: compact subparser lines, `print(...); return 1`, `_connect` helper, docstring of storage.py updated in-voice."
+    ]
+  },
+  "S02": {
+    "scores": [1, 1, 1, 2, 2, 2],
+    "notes": [
+      "load() guards `path.exists()` but the `with conn:` blocks never close the sqlite connection.",
+      "Reqs 1,2,4,5 tested; default path / TODO_FILE (req 3) untested.",
+      "`assert tasks[0].created_at == tasks[0].created_at` is a tautology; `test_sqlite_save_replaces_and_next_id` is a grab-bag; stray `t2 = 2` and a useless `--file src` before `migrate`.",
+      "README: 4 added lines in the original terse voice covering new default, --file/TODO_FILE for JSON, migrate and the empty-destination rule.",
+      "Inline migrate branch, rename as in spec, nothing extra.",
+      "Same compact style as cli.py (`print(...); return 1`), `path.suffix` factory, SqliteStore mirrors JsonStore layout."
+    ]
+  },
+  "S03": {
+    "scores": [1, 2, 2, 2, 2, 1],
+    "notes": [
+      "Connections never closed (`with` only commits); load() has no exists() guard so a read creates the file.",
+      "Only patch with a req-3 test: `test_cli_default_uses_sqlite` sets TODO_FILE and runs without --file; all other reqs also covered, incl. tags JSON column.",
+      "Eleven tests with distinct purposes; `next_id([]) == 1` repeated in two tests and `t = main(...)` naming is odd, but nothing is padding.",
+      "README: code block with default, JSON, rename, migrate examples plus the failure message; reasonable length.",
+      "Only requested scope; inline migrate branch.",
+      "Style drift: multi-line `Task(id=row[0], ...)` over seven lines, over-indented triple-quoted SQL, rst `:class:` docstring in open_store — none of this appears in the original module."
+    ]
+  },
+  "S04": {
+    "scores": [2, 1, 1, 2, 2, 1],
+    "notes": [
+      "load()/save() use try/finally `conn.close()` with `with conn:` for the transaction and an exists() guard in load.",
+      "Req 3 default/TODO_FILE untested; roundtrip also never checks created_at, but migrate test does.",
+      "`test_migrate_sqlite_to_json_and_nonempty_dest` bundles the reverse-direction happy path and the error path into one function.",
+      "README: three short prose paragraphs on default, migrate and rename; matches voice.",
+      "Nothing unrequested; migrate inline.",
+      "Drift: string annotation `\"str | Path\"` despite `from __future__ import annotations`, lazy `from .sqlite_store import SqliteStore` inside open_store, `__init__(self, store)` loses its type while the now-unused JsonStore import is kept."
+    ]
+  },
+  "S05": {
+    "scores": [1, 1, 2, 2, 2, 2],
+    "notes": [
+      "exists() guard in load, but `with self._connect() as conn:` never closes the connection.",
+      "Reqs 1,2,4,5 tested (incl. a dedicated missing-file load test); req 3 default/TODO_FILE untested.",
+      "Ten single-purpose tests built on a `make_tasks()` helper; migrate tests assert full `load() ==` equality so all fields are checked.",
+      "README: bullet list of examples plus one line on migrate and `destination not empty`; concise and in voice.",
+      "Only what was asked; no helpers beyond the spec.",
+      "Mirrors JsonStore layout; `print(...); return 1` style preserved; `path.suffix == \".json\"` factory."
+    ]
+  },
+  "S06": {
+    "scores": [1, 1, 2, 2, 2, 2],
+    "notes": [
+      "Connections never closed; load() has no exists() guard (creates DB on read).",
+      "Reqs 1,2,4,5 tested; req 3 default/TODO_FILE untested.",
+      "Eight lean tests, each with a distinct purpose; s->j migrate only checks id/title but that is still meaningful.",
+      "README: default, TODO_FILE example, JSON backend, migrate and failure message; uses `todo` script name rather than `python -m todo.cli` but stays short.",
+      "Nothing beyond the spec; migrate as an elif branch.",
+      "Compact style kept; only drift is the string annotation `\"str | Path\"` under a future import."
+    ]
+  },
+  "S07": {
+    "scores": [1, 1, 2, 1, 2, 2],
+    "notes": [
+      "Connections never closed and no exists() guard in load.",
+      "Reqs 1,2,4,5 tested; req 3 default/TODO_FILE untested.",
+      "Ten tests, distinct purposes (store, service-through-store, factory, migrate x3, rename x2); `sample_tasks()` keeps data assertions complete.",
+      "README names the internal `open_store` function (\"The backend is chosen by `open_store`\") and lists every command; longer and leaks implementation detail into user docs.",
+      "`_migrate` helper is small and justified; no extra scope.",
+      "Follows module conventions; `open_store` return annotation and multi-line Task(...) are mild."
+    ]
+  },
+  "S08": {
+    "scores": [1, 1, 2, 1, 2, 2],
+    "notes": [
+      "Connections never closed; load() creates the DB on read.",
+      "Reqs 1,2,4,5 tested; req 3 default/TODO_FILE untested.",
+      "Eleven tests, distinct purposes; next_id is split across roundtrip and `test_sqlite_next_id_empty` but nothing is redundant or empty.",
+      "README grows to ~24 lines and documents pre-existing `list --all`, `done`, `rm` which the task did not ask to describe; over-long for a 3-line README.",
+      "Code only adds what was asked.",
+      "Compact cli style kept; `open_store` return annotation and multi-line Task(...) are small drift."
+    ]
+  },
+  "S09": {
+    "scores": [1, 1, 2, 2, 2, 1],
+    "notes": [
+      "exists() guard in load, but connections are never closed.",
+      "Reqs 1,2,4,5 tested, incl. tags JSON column; req 3 default/TODO_FILE untested.",
+      "Fourteen tests, each distinct; factory split into three tiny tests is granular but not redundant; migrate tests check every preserved field.",
+      "README: code block plus one migrate paragraph; concise and in voice.",
+      "Removed the JsonStore import and type hint from service.py (defensible since the store is now polymorphic); otherwise only requested changes.",
+      "Drift: `__init__(self, store)` untyped instead of a union, seven-line Task(...) construction, over-indented triple-quoted SQL, section banner comments in tests not used in test_service.py."
+    ]
+  },
+  "S10": {
+    "scores": [2, 1, 2, 2, 2, 2],
+    "notes": [
+      "try/finally `conn.close()` in both load and save, `with conn:` for the transaction, exists() guard; dst checked before anything is written.",
+      "Reqs 1,2,4,5 tested; req 3 default/TODO_FILE untested.",
+      "Ten single-purpose tests; `assert before[0].title == \"existing\"` in the non-empty test is a weak pre-state check but the post-state is also asserted.",
+      "README: default, JSON rule, rename example, migrate section with failure rule; adds a `##` heading but stays on topic.",
+      "`cmd_migrate` helper serves req 4; nothing extra.",
+      "Matches module conventions; `sqlite3.connect(str(self.path))` and placement of cmd_migrate between build_service and main read naturally."
+    ]
+  },
+  "S11": {
+    "scores": [2, 1, 2, 1, 1, 1],
+    "notes": [
+      "Connections closed via try/finally, exists() guard present; `tasks = src.load()` runs before the dst check but dst is still untouched on failure.",
+      "Reqs 1,2,4,5 tested; req 3 default/TODO_FILE untested (and the `--file x migrate` subparser path is never exercised).",
+      "Eight tests, each distinct; rename test checks returned Task, persistence and KeyError.",
+      "README ~24 lines listing `list`, `done`, `rm` (unrequested) in addition to the new features; over-long.",
+      "Duplicate parsing: `cmd_migrate` builds its own ArgumentParser and main() intercepts `argv[0] == \"migrate\"` before argparse, while also registering a `migrate` subparser; `argv = list(sys.argv[1:] ...)` re-implements argparse's default. Unrequested boilerplate.",
+      "Two parsers for one command and the pre-argparse shortcut are foreign to how cli.py dispatches every other subcommand."
+    ]
+  },
+  "S12": {
+    "scores": [1, 1, 1, 2, 2, 2],
+    "notes": [
+      "Connections never closed; load() has no exists() guard.",
+      "Reqs 1,2,4,5 tested; req 3 default/TODO_FILE untested.",
+      "`test_sqlite_save_replaces_and_next_id` is a grab-bag (complete, remove, next_id, id reuse) whose name only half describes the body; the other eight tests are clean.",
+      "README: code block plus one migrate paragraph; concise and in voice.",
+      "Nothing beyond the spec; inline migrate branch.",
+      "Compact style kept; SqliteStore mirrors JsonStore; `path.suffix` factory."
+    ]
+  }
+}

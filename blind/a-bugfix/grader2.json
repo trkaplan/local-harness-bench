@@ -1,0 +1,146 @@
+{
+  "S01": {
+    "scores": [
+      2,
+      2,
+      1,
+      2,
+      2,
+      2
+    ],
+    "notes": [
+      "Raises ValueError when '-' follows parens and wraps Decimal() in `except ArithmeticError -> ValueError`, so '-(45.00)', '(-45.00)' and garbage like 'abc' all surface as ValueError; '€ -3.10' still parses.",
+      "Tests cover (45.00) -> -45.00, -(45.00) raises, between() end date (plus single-day window), zero-padded sorted keys, and the 16.99 discount guard.",
+      "First test bundles four purposes (parens, raise, plain minus, '(1,234.50)'); `assert type(excinfo.value) is ValueError` pins the exact type beyond the spec and its comment ('InvalidOperation is itself a ValueError subclass') is factually wrong.",
+      "Docstring gains two lines stating that parens and a minus may not be combined and that ValueError is raised; README has no user-facing surface to update.",
+      "Every added core line serves bug 1-3; the Decimal wrap is what turns '-(45.00)' into a ValueError, so it is not extra scope.",
+      "Top-level `import pytest`, compact f-string key `{year:04d}-{month:02d}`, same comment and naming style as the original module."
+    ]
+  },
+  "S02": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      2,
+      1
+    ],
+    "notes": [
+      "`was_parenthesized or s[1:].strip().startswith('(')` rejects both '-(45.00)' and '(-45.00)' with ValueError; other malformed input still leaks decimal.InvalidOperation as before (pre-existing, not required).",
+      "Separate tests for (45.00), -(45.00) raising, between() inclusive end (plus single-day window), zero-padded sorted keys, and 16.99 discount.",
+      "Each test has one purpose and body matches name; `list(keys) == sorted(keys)` after the exact-list assert is a harmless restatement of requirement 3.",
+      "Docstring unchanged, so the new ValueError contract for '-(45.00)' is undocumented; README untouched (nothing user-facing to add there).",
+      "Fix is minimal; moving the `replace(...)` line below the minus check is an unrequested reorder but has no behavioural effect ('$-5' still -5).",
+      "`import pytest` inside two test bodies instead of at module top where the fixture keeps its imports; otherwise matches the module's style."
+    ]
+  },
+  "S03": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      2,
+      1
+    ],
+    "notes": [
+      "Early `startswith('-') and endswith(')')` check rejects '-(45.00)', the later `if negative: raise` rejects '(-45.00)'; other garbage still raises InvalidOperation (pre-existing).",
+      "One test per bug: parens+raise, between() with before/on-start/middle/on-end/after entries, zero-padded sorted keys incl. a negative amount, and the 16.99 guard.",
+      "Tests are distinct and their bodies match their names; the between() test is the most complete boundary test of the set.",
+      "Docstring unchanged, new ValueError path undocumented; README untouched.",
+      "Two raise sites with near-duplicate comments ('contradictory input') where one check would do, but no scope beyond the task.",
+      "`import pytest` inside the test function; core edits otherwise follow the module's compact style and error-message format."
+    ]
+  },
+  "S04": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      2,
+      1
+    ],
+    "notes": [
+      "`if negative: raise` handles '(-45.00)' and `if '(' in s or ')' in s: raise` handles '-(45.00)'; both yield ValueError, '€ -3.10' unaffected.",
+      "Tests hit (45.00), -(45.00) raises, between() with before/start/inside/end/after entries, zero-padded sorted keys, and the 16.99 discount.",
+      "One purpose per test, bodies agree with names; inline `# before start` style comments make the boundary test readable.",
+      "Docstring unchanged, so the new rejection is undocumented; README untouched.",
+      "Minimal fix; the added `.strip()` on `s[1:-1]` is redundant with the later `.strip()` but trivial.",
+      "`import pytest` inside the test body; everything else reads like the original author."
+    ]
+  },
+  "S05": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      1,
+      1
+    ],
+    "notes": [
+      "Leading-minus branch raises on a following '(' and Decimal() is wrapped into ValueError, so '-(45.00)', '(-45.00)' and 'abc' all raise ValueError; '€ -3.10' and '$-5' still parse.",
+      "Separate tests for (45.00), -(45.00) raising, between() including the end date, zero-padded sorted keys across years, and the 16.99 guard.",
+      "Distinct single-purpose tests; between() test checks end inclusion and exclusion past end, enough to fail if the fix were reverted.",
+      "Docstring unchanged; README untouched.",
+      "Restructures parse_amount into an if/elif sign dispatch plus a second minus check, more than the bug needs; comment `# A second minus sign (e.g. '12.-3')` describes an input that never reaches that branch.",
+      "`import pytest` inside the test body; the reshaped control flow departs from the original's linear strip-then-check structure."
+    ]
+  },
+  "S06": {
+    "scores": [
+      1,
+      2,
+      1,
+      2,
+      0,
+      1
+    ],
+    "notes": [
+      "`if '-' in s: raise` after symbol stripping rejects previously valid '€ -3.10' and '$-5' (the original stripped currency symbols before reading the minus) and also '1E-2'; a regression that would bite a real user of this parser.",
+      "Tests cover (45.00), -(45.00) raising, between() with all five boundary positions plus single-day window, zero-padded sorted keys, and the 16.99 discount.",
+      "First test bundles six assertions including unspecified cases '(45.00)-', '(-45.00)', '(45.00'; `all(len(k) == 7 ...)` restates the exact-list assert; extra 20.01/50% discount case not asked for.",
+      "Docstring documents the raised ValueError and its cases concisely; README untouched (nothing user-facing to add).",
+      "Over-engineered: unbalanced-paren detection, trailing/embedded minus rejection and a reinterpreted 'minus only in leading position' rule go well beyond bug 1 and silently change accepted input.",
+      "Top-level `import pytest` is right, but the rewritten parse_amount with blank-line sections and paragraph comments no longer reads like the compact original."
+    ]
+  },
+  "S07": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      2,
+      1
+    ],
+    "notes": [
+      "`if parenthesized: raise` on a minus rejects '(-45.00)' and the `except ArithmeticError` wrap turns '-(45.00)' and 'abc' into ValueError; '€ -3.10' unaffected.",
+      "Tests cover (45.00), -(45.00) raising, between() with on-start/inside/on-end/after entries, zero-padded sorted keys, and the 16.99 guard.",
+      "Single-purpose tests whose bodies match their names; `sorted(keys)` assert is a mild restatement.",
+      "Docstring unchanged; README untouched.",
+      "Minimal fix: a `parenthesized` flag, one raise for the parens-plus-minus case and the Decimal wrap that turns '-(45.00)' into ValueError; no scope beyond bugs 1-3.",
+      "`import pytest` inside the test body instead of at module top; the `parenthesized` flag, f-string key and error message otherwise match the module's style."
+    ]
+  },
+  "S08": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      1,
+      1
+    ],
+    "notes": [
+      "`if negative: raise` plus `except ArithmeticError -> ValueError` make '-(45.00)', '(-45.00)' and 'abc' raise ValueError; '€ -3.10' and '$-5' still parse.",
+      "Tests cover (45.00), -(45.00) raising, between() with before/first/middle/last/after entries, zero-padded sorted keys, and the 16.99 guard.",
+      "Single-purpose tests, bodies agree with names; the between() test is a complete boundary check.",
+      "Docstring unchanged; README untouched.",
+      "`if parenthesized and s.startswith('-'): raise` is unreachable: the preceding branch already raised for any parenthesized value starting with '-' and stripped the minus otherwise. Dead code left in.",
+      "`import pytest` inside the test body; the `parenthesized` flag and error message otherwise match the module's style."
+    ]
+  }
+}

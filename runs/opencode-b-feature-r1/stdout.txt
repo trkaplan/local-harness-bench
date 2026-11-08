@@ -1,0 +1,34 @@
+I'll start by exploring the existing codebase structure.
+Now I have a full picture. Let me implement all the changes.
+Now the factory in `storage.py`:
+Now the `rename` service method:
+Now update the CLI — default path, `open_store`, `migrate`, and `rename` subcommands:
+Now the tests:
+Let me check the CLI default path is covered and review the final CLI file:
+Now update the README and add the default-path test:
+All 10 tests pass. Let me verify each requirement has dedicated test coverage with a quick mutation check — temporarily removing a feature should fail a test:
+The `git checkout` reverted my CLI changes (they were uncommitted). Let me restore them:
+The mutation script had a backup-restore bug. Let me restore from git and reapply changes cleanly:
+Now re-run the full suite, then do the remaining mutation checks (Req 1, 2, 4, 5) one at a time with proper restores:
+All mutations correctly fail their tests. Verify the restores are clean and run the final full suite:
+All done — 10 tests pass (3 pre-existing + 7 new), and every requirement was mutation-verified.
+
+## Changes
+
+**`todo/sqlite_store.py`** (new) — `SqliteStore(path)` with `load()`/`save()`/`next_id()` matching `JsonStore`'s interface. Uses only `sqlite3` + `json`; table `tasks` with the exact required schema, `tags` JSON-encoded. `save()` runs `DELETE` + `executemany INSERT` in a single transaction (the `with conn:` block commits atomically). `next_id` is `max+1` or 1, identical to `JsonStore`.
+
+**`todo/storage.py`** — added `open_store(path)`: `JsonStore` for `.json` suffix, `SqliteStore` otherwise (local import avoids a circular dependency).
+
+**`todo/cli.py`** —
+- default `--file` is now `~/.todo.db` (still overridable via `TODO_FILE`);
+- `build_service` uses `open_store`, so `--file x.json` still hits the JSON backend;
+- new `migrate SRC DST`: picks stores by extension, refuses a non-empty destination with `destination not empty` on stderr and exit 1 *before* writing anything, otherwise copies all tasks (full `Task` objects preserve id/done/created_at/tags) and prints `migrated N tasks`;
+- new `rename ID TITLE` printing `renamed #ID`, exit 1 on unknown id.
+
+**`todo/service.py`** — `rename(task_id, new_title)` returns the updated `Task`, raises `KeyError` for unknown ids (mirrors `complete`).
+
+**`tests/test_sqlite_store.py`** (new) — one focused test per requirement: SQLite roundtrip/replace/next_id (req 1), factory extension dispatch (req 2), default path `.todo.db` + `TODO_FILE` override (req 3), migrate both directions incl. non-empty-destination guard and destination-unchanged check (req 4), service `rename` incl. `KeyError` (req 5), CLI `rename` output (req 5).
+
+**`README.md`** — documents the SQLite default, `TODO_FILE`, the `.json` backend still working, and the `migrate` command.
+
+I verified coverage by temporarily reverting each feature (default path, factory dispatch, done-flag persistence, migrate guard, rename `KeyError`) — each mutation failed exactly its own test, then all files were restored and the full suite re-passed.

@@ -1,0 +1,14 @@
+2026-11-08 23:23:29,305 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 52 tokens in 1.66s (31.3 tok/s), prompt: 1592, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:23:30,255 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 37 tokens in 0.90s (40.9 tok/s), prompt: 1727, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:23:32,570 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 34 tokens in 2.29s (14.9 tok/s), prompt: 3179, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:23:41,791 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 655 tokens in 9.20s (71.2 tok/s), prompt: 3612, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:23:50,613 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 589 tokens in 8.76s (67.2 tok/s), prompt: 4433, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:23:58,198 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 642 tokens in 7.48s (85.8 tok/s), prompt: 5111, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:24:05,397 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 231 tokens in 7.09s (32.6 tok/s), prompt: 5996, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:24:08,220 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 33 tokens in 2.74s (12.0 tok/s), prompt: 6496, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:24:12,002 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 257 tokens in 3.75s (68.6 tok/s), prompt: 6677, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:24:27,480 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 1094 tokens in 15.23s (71.8 tok/s), prompt: 7052, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:24:30,709 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 44 tokens in 3.16s (13.9 tok/s), prompt: 8940, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:24:34,586 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 232 tokens in 3.74s (62.0 tok/s), prompt: 9040, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:24:37,417 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 77 tokens in 2.74s (28.2 tok/s), prompt: 10197, finish_reason=stop, max_tokens=16384, request_max_tokens=16384
+2026-11-08 23:24:38,889 - omlx.server - INFO - Chat completion: model=qwen-flash-next, 32 tokens in 1.34s (23.9 tok/s), prompt: 10536, finish_reason=stop, max_tokens=16384, request_max_tokens=16384

@@ -1,0 +1,7 @@
+ README.md             | 10 +++++++++-
+ tests/test_service.py | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ todo/cli.py           | 22 +++++++++++++++++++---
+ todo/service.py       |  9 +++++++++
+ todo/sqlite_store.py  | 49 +++++++++++++++++++++++++++++++++++++++++++++++++
+ todo/storage.py       | 11 ++++++++++-
+ 6 files changed, 147 insertions(+), 5 deletions(-)

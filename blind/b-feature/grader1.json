@@ -1,0 +1,90 @@
+{
+  "S01": {
+    "scores": [1, 2, 1, 1, 1, 1],
+    "notes": [
+      "R1: `with self._connect() as conn:` in load/save only commits, never closes the connection (minor gap); load guards `path.exists()`, DELETE+INSERT run in one `with conn` transaction, tags decoded with `or \"[]\"` fallback.",
+      "R2: Every requirement tested, incl. req 3 fully: test_cli_default_path_is_home_todo_db asserts `Path.home() / \".todo.db\"`, test_cli_default_path_honours_env, test_cli_default_file_uses_sqlite, test_cli_json_path_still_works; migrate both directions + non-empty both directions + empty source; rename service and CLI.",
+      "R3: Redundant copies: test_cli_migrate_preserves_everything re-asserts what test_cli_migrate_json_to_sqlite already proves via `SqliteStore(dst).load() == JsonStore(src).load()`; test_rename_persists_with_sqlite duplicates test_rename_updates_title on another backend; test_open_store_created_file_is_readable duplicates the service roundtrip; `isinstance(open_store(db), SqliteStore)` inside a CLI test is a factory check, not a CLI check. Names and bodies agree, so 1 not 0.",
+      "R4: README grows from 4 to 41 lines with a `## Development` section explaining `SqliteStore.save()` transaction internals; covers default, env, migrate and failure correctly but is over-long for a 3-line README.",
+      "R5: Adds a `Store` Protocol in service.py (not requested), parent-dir test, Development README section, and ~6 extra tests beyond the requirements; no reinterpretation.",
+      "R6: Import blocks separated by blank lines and a module-level `SCHEMA` constant differ from the compact original; `from .sqlite_store import SqliteStore` is lazily imported inside open_store although no cycle exists; test file uses `# ---------- ----------` section banners absent from tests/test_service.py."
+    ]
+  },
+  "S02": {
+    "scores": [2, 2, 0, 1, 0, 1],
+    "notes": [
+      "R1: Connections closed in try/finally in both load and save, `_connect` closes on schema failure, explicit `BEGIN`/`COMMIT`/`ROLLBACK` for the DELETE+INSERT; defensive `_row_to_task` handles bad tags JSON.",
+      "R2: All requirements have tests; req 3 via test_cli_default_file_is_dot_todo_db (TODO_FILE -> .db goes to SqliteStore, `--file other.json` writes real JSON checked with json.loads) though the literal `~/.todo.db` default is never asserted.",
+      "R3: test_migrate_failure_creates_no_destination_file docstring says a failing migrate must not create the destination, but the body runs a *successful* migrate and asserts `dst.exists()`; test_migrate_roundtrip_is_faithful promises 'byte for byte' but compares `json.loads` output and duplicates the two directional tests; test_migrate_nonempty_json_destination_untouched duplicates test_migrate_into_nonempty_fails; `_seed_tasks` defined after first use. Several mislabeled/redundant tests.",
+      "R4: README expands to three sections and leaks implementation (`todo.storage.open_store`, 'table `tasks`, full-content replace inside a single transaction', an empty `## Development` heading above the Tests line); correct but over-long.",
+      "R5: Speculative handling of states the schema forbids (`\"\" if row[3] is None`, non-list tags -> `[str(tags)]`), `isolation_level = None` plus manual BEGIN/COMMIT where `with conn:` suffices, TYPE_CHECKING import blocks in two modules, `_row_to_task`/`_to_row` staticmethods, help text and explanatory comments; over-engineered for a 50-line store.",
+      "R6: Sphinx `:class:` docstrings, `# pragma: no cover` TYPE_CHECKING guards, staticmethod helpers and `_SCHEMA` constant read differently from the terse original; lazy import inside open_store although no import cycle exists."
+    ]
+  },
+  "S03": {
+    "scores": [2, 1, 2, 2, 1, 1],
+    "notes": [
+      "R1: Connections closed in try/finally in load and save; `with conn:` makes DELETE+INSERT one transaction; load returns [] when the file is missing; migrate checks `dst.load()` before `dst.save()`.",
+      "R2: Req 3 untested: no test of the `~/.todo.db` default, TODO_FILE, or that the CLI uses open_store for a `.json` path; reqs 1,2,4,5 covered (roundtrip, next_id, factory, migrate both directions + non-empty, rename service/CLI). No test that save replaces full contents.",
+      "R3: Eight tests, each with one purpose and matching name; test_sqlite_next_id exercises add/remove then `next_id(store.load()) == 2`; test_rename covers return value, persistence and KeyError in one coherent test.",
+      "R4: README stays short (one paragraph, two code blocks) and covers default `~/.todo.db`, `--file`/`TODO_FILE`, `.json` selection, rename, migrate in both directions and the non-empty failure with exit code 1.",
+      "R5: `cmd_migrate` builds a second `argparse.ArgumentParser(prog=\"todo migrate\")` and `main` pre-dispatches on `argv[0] == \"migrate\"` *and* registers a `migrate` subparser, plus `argv = list(sys.argv[1:] if argv is None else argv)` changes main's contract; duplicated parsing nobody asked for.",
+      "R6: Import grouping and semicolon one-liners match the original, but the duplicated parser and argv pre-dispatch break the single-parser convention of cli.py; `open_store` returns untyped while JsonStore methods are annotated."
+    ]
+  },
+  "S04": {
+    "scores": [1, 1, 2, 2, 2, 2],
+    "notes": [
+      "R1: `with self._connect() as conn:` never closes the sqlite connection (minor gap); load guards `path.exists()`, DELETE+INSERT in one transaction, migrate checks `dst.load()` before writing.",
+      "R2: Req 3 untested: no test of the `~/.todo.db` default, TODO_FILE override, or CLI backend selection; reqs 1 (roundtrip, replace, next_id, tags JSON column via PRAGMA-free SELECT), 2, 4 (both directions, non-empty untouched) and 5 (service, KeyError, CLI) covered.",
+      "R3: Fifteen focused tests, names match bodies; test_open_store_json/sqlite/accepts_str are small but distinct; test_sqlite_store_tags_json_encoded leaves a raw sqlite3 connection open (cosmetic).",
+      "R4: README adds one paragraph, a 4-line code block and a `migrate` paragraph with the `destination not empty` message; covers default, `.json`, TODO_FILE, rename, migrate; matches the original's brevity.",
+      "R5: Only what was asked: SqliteStore, open_store, default path, inline migrate block in main, rename method placed next to complete; service import of JsonStore dropped since the type is no longer accurate.",
+      "R6: Imports and layout match the original (`from .sqlite_store import SqliteStore` at top of storage.py, return type `JsonStore | SqliteStore`), rename mirrors complete's loop verbatim, CLI additions use the existing semicolon one-liner style."
+    ]
+  },
+  "S05": {
+    "scores": [1, 1, 2, 2, 2, 2],
+    "notes": [
+      "R1: `with self._connect() as conn:` never closes the connection and load() has no `exists()` guard, so a read creates an empty .db (minor); DELETE+INSERT atomic via `with`, migrate checks `dst_store.load()` before saving.",
+      "R2: Req 3 untested: no default path / TODO_FILE / CLI backend-selection test; reqs 1, 2 (incl. `x.JSON.bak` -> SqliteStore edge), 4 (both directions compare full `sample_tasks()` equality, non-empty untouched) and 5 covered.",
+      "R3: Ten tests sharing one `sample_tasks()` helper; each has a single purpose and name/body agree; test_cli_rename also checks unknown id returns 1.",
+      "R4: README adds two short paragraphs and one example; covers default `~/.todo.db`, `.json` fallback, TODO_FILE/--file, rename, migrate and `destination not empty`; mentions `open_store` by name (minor internal leak).",
+      "R5: Minimal: SqliteStore, open_store with `str(path).endswith(\".json\")` mirroring the spec wording, `_migrate` helper, rename; nothing extra.",
+      "R6: Matches original import grouping and semicolon style; `_migrate` placed after `main` while original helpers sit before it (tiny drift); SqliteStore re-exported via storage.py so tests import from one module."
+    ]
+  },
+  "S06": {
+    "scores": [1, 2, 2, 2, 2, 2],
+    "notes": [
+      "R1: `with self._connect() as conn:` never closes the connection and load() has no `exists()` guard (creates an empty .db on read); transaction atomic via `with`, migrate checks dst before save.",
+      "R2: All requirements have tests; req 3 via test_cli_default_uses_sqlite (TODO_FILE set to a .db, `add` without --file, `SqliteStore(db).load()` sees the task) though the literal `~/.todo.db` constant is not asserted; migrate both directions, non-empty untouched, rename service + CLI.",
+      "R3: Eleven tests with matching names; test_sqlite_save_replaces_contents tacks on `store.next_id([]) == 1` which belongs to the next test (minor mixing); test_sqlite_tags_are_json_column verifies the JSON column directly.",
+      "R4: README adds one paragraph, a 4-line example block and a one-line migrate failure note; covers default, override, `.json`, rename, migrate; same voice and roughly same length as the original.",
+      "R5: Minimal diff: inline migrate block, rename next to complete, open_store with docstring; nothing beyond the task.",
+      "R6: Consistent: `from .sqlite_store import SqliteStore` at top of storage.py, rename mirrors complete, CLI uses `rn = sub.add_parser(...)` one-liner style; only the `:class:` docstring markup is foreign to the codebase."
+    ]
+  },
+  "S07": {
+    "scores": [1, 1, 2, 2, 2, 2],
+    "notes": [
+      "R1: `with self._connect() as conn:` never closes the connection and load() has no `exists()` guard (minor); DELETE+INSERT atomic via `with`; migrate checks `dst.load()` before writing and prints to stderr with return 1.",
+      "R2: Req 3 untested: no default path / TODO_FILE / CLI backend-selection test; reqs 1 (roundtrip incl. next_id, replace), 2, 4 (json->sqlite checks id/done/created_at/tags, sqlite->json, non-empty untouched) and 5 covered.",
+      "R3: Eleven single-purpose tests; test_sqlite_roundtrip and test_sqlite_next_id_empty slightly overlap on next_id but check different inputs; test_migrate_json_to_sqlite uses `Task.from_dict` to seed a done task with fixed created_at so preservation is really checked.",
+      "R4: README adds two short paragraphs and two code blocks; covers default `~/.todo.db`, `--file`/`TODO_FILE`, `.json`, rename, migrate, exit code 1 and `destination not empty`; concise.",
+      "R5: Minimal: migrate as an `elif` in the existing chain, rename next to complete, open_store; `build_service(args)` still runs before the migrate branch but SqliteStore.__init__ only stores the path so there is no side effect.",
+      "R6: Reads like the original author: migrate uses the same `print(...); return 1` semicolon one-liner, rename mirrors complete, imports grouped identically, return type `JsonStore | SqliteStore` annotated."
+    ]
+  },
+  "S08": {
+    "scores": [2, 1, 2, 2, 2, 2],
+    "notes": [
+      "R1: Connections closed in try/finally in load and save, `with conn:` wraps DELETE+INSERT, load returns [] when the file is missing, migrate checks `dst.load()` before `dst.save()`.",
+      "R2: Req 3 untested: no default path / TODO_FILE / CLI backend-selection test; reqs 1 (roundtrip, replace, next_id), 2, 4 (both directions with created_at/done/tags checks, non-empty untouched) and 5 (service, KeyError, CLI incl. unknown id) covered.",
+      "R3: Ten single-purpose tests with matching names; test_migrate_nonempty_destination computes `before` and only asserts `before[0].title == \"existing\"` (vestigial), but the after-state is checked separately so nothing is mis-tested.",
+      "R4: README adds one paragraph, a 3-line example and a `## Migrating between backends` section; covers default, `.json`, TODO_FILE, rename, migrate; omits the exact `destination not empty` text but says the destination must be empty; proportionate length.",
+      "R5: Minimal: `cmd_migrate` helper, rename, open_store, no extras; README section heading is the only non-essential addition.",
+      "R6: Consistent with original: helper defined before `main` like `default_path`/`build_service`, `rn = sub.add_parser(...)` one-liner, rename mirrors complete, compact imports; `sqlite3.connect(str(self.path))` is a harmless redundancy."
+    ]
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "S01": {
+    "scores": [
+      2,
+      2,
+      1,
+      2,
+      2,
+      2
+    ],
+    "notes": [
+      "Rejects '(-45.00)' via `if negative: raise ValueError` and wraps `Decimal(s)` in `except ArithmeticError` so '-(45.00)' and any other garbage surface as ValueError instead of decimal.InvalidOperation.",
+      "Tests cover '(45.00)'->-45.00, '-(45.00)' raises, between() end-inclusive plus single-day window, zero-padded keys with months 10/3/1 (would mis-sort unpadded), and the 19.99/15% guard.",
+      "test_parse_amount_* pins `type(excinfo.value) is ValueError` (spec only says 'raise ValueError') and its comment claims InvalidOperation is a ValueError subclass, which is false (it is an ArithmeticError); otherwise one purpose per test.",
+      "parse_amount docstring gains two lines stating that parentheses and a minus may not be combined and that '-(45.00)' raises ValueError; same voice as the original one-liner.",
+      "Only the three fixes plus the exception mapping that criterion 1 needs; extra asserts for '-45.00' and '(1,234.50)' are small and relevant.",
+      "Top-level `import pytest` next to the other imports, `l = Ledger()` naming and f-string style match the file; the '# --- regression tests ---' banner is the only mild novelty."
+    ]
+  },
+  "S02": {
+    "scores": [
+      2,
+      2,
+      2,
+      0,
+      2,
+      1
+    ],
+    "notes": [
+      "`was_parenthesized or s[1:].strip().startswith(\"(\")` rejects both '-(45.00)' and '(-45.00)' before Decimal() is reached; bare Decimal(s) still raises InvalidOperation for other garbage, but the spec does not ask for that.",
+      "Separate tests for '(45.00)', '-(45.00)' ValueError, between() with end and a single-day window, zero-padded keys (2025-09/2026-03/2026-11) with a sum check, and the 16.99 guard.",
+      "Each test has one purpose; `list(keys) == sorted(keys)` after the explicit key-list assert is a harmless restatement, not padding.",
+      "No docstring or comment anywhere explains the new ValueError path; `raise ValueError(...)` is bare and README untouched.",
+      "Moves the replace(',','€','$') line below the sign check as part of the fix; nothing else beyond the three bugs.",
+      "`import pytest` inside the test function instead of with the module imports is a small style drift from the fixture's top-level imports."
+    ]
+  },
+  "S03": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      2,
+      1
+    ],
+    "notes": [
+      "Early `s.startswith(\"-\") and s.endswith(\")\")` check raises ValueError for '-(45.00)', and the later `if negative: raise` covers '(-45.00)'; bare Decimal(s) is left as in the original.",
+      "test_parse_accounting_negative asserts both halves of bug 1, test_between_inclusive_end puts entries before/on start/middle/on end/after, test_monthly_totals_zero_padded_sorted checks key order and a per-month sum, test_discount_half_up_rounding checks 16.99.",
+      "Four tests, one purpose each, bodies match names; no redundant or empty tests.",
+      "Two inline comments ('contradictory input') explain the rejection, but the parse_amount docstring still lists only accepted forms and does not mention the ValueError.",
+      "Only the three fixes; the two near-duplicate 'contradictory input' comments are the sole excess.",
+      "`import pytest` inside the test body; otherwise mirrors the fixture's f-string and comprehension style."
+    ]
+  },
+  "S04": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      2,
+      1
+    ],
+    "notes": [
+      "`if negative: raise` plus a generic `if \"(\" in s or \")\" in s: raise` reject '-(45.00)', '(-45.00)' and any stray parenthesis before Decimal(); other garbage still raises InvalidOperation (not required).",
+      "Covers '(45.00)', '-(45.00)' ValueError, between() with before/on-start/inside/on-end/after entries, zero-padded sorted keys (2025-12/2026-03/2026-11) with a sum, and the 16.99 guard.",
+      "One purpose per test; the trailing `list(keys) == sorted(keys)` restates the explicit list but is not misleading.",
+      "Inline comments explain the two raises; docstring not updated to mention the ValueError.",
+      "Adds `.strip()` inside the paren branch, a tiny unrequested tolerance; everything else maps to a requirement.",
+      "`import pytest` inside the test function; aligned trailing comments on the Entry lines are slightly busier than the fixture's plain style."
+    ]
+  },
+  "S05": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      1,
+      1
+    ],
+    "notes": [
+      "Leading-minus branch raises on `s.startswith(\"(\")`, `elif` paren branch plus `if negative: raise` catches '(-45.00)', and Decimal() is wrapped in `except ArithmeticError` -> ValueError.",
+      "Separate tests for '(45.00)', '-(45.00)', between() including the end date, zero-padded sorted keys with two per-month sums, and the 16.99 guard.",
+      "Five focused tests, names and bodies agree; between test lacks a before-start entry but still exercises the end bound.",
+      "Comments explain the raises, but the second one cites '12.-3' as the example, which does not start with '-' and can never reach that branch; docstring unchanged.",
+      "Rewrites the whole sign-handling order (minus first, elif parens) and adds `.strip()` inside parens where a two-line guard would have done; the wrong '12.-3' comment is slop.",
+      "`import pytest` inside the test function; core.py edits otherwise follow the fixture's style."
+    ]
+  },
+  "S06": {
+    "scores": [
+      1,
+      2,
+      1,
+      2,
+      0,
+      2
+    ],
+    "notes": [
+      "`if \"-\" in s: raise` after the currency replace now rejects inputs like '€ -3.10' or '$-5' that the original parsed to a negative Decimal, a behavior regression the task did not ask for; bare Decimal(s) also still leaks InvalidOperation for non-numeric text.",
+      "All requirements covered: '(45.00)', '-(45.00)' raise, between() with on-start/inside/on-end plus single-day window, zero-padded sorted keys (months 10/3 would mis-sort unpadded), and the 16.99 guard.",
+      "test_parse_amount_* bundles six asserts including '(45.00)-', '(-45.00)' and '(45.00' that no requirement mentions; discount test adds a second 20.01/50% case; `all(len(k) == 7 ...)` duplicates the explicit key list. Padding beyond the spec.",
+      "Docstring gains a three-line 'Raises ValueError on malformed input' paragraph that accurately describes the new behavior, in the same voice as the original.",
+      "Replaces the sign logic with new validation rules (unbalanced parens, trailing/embedded minus), expands the docstring and tests to match: the spec's single '-(45.00)' case was reinterpreted as a general grammar, with the '€ -3.10' regression as the cost.",
+      "Top-level `import pytest`, named Entry variables, same f-string and comprehension style as the fixture; banner comment is minor."
+    ]
+  },
+  "S07": {
+    "scores": [
+      2,
+      2,
+      2,
+      1,
+      2,
+      1
+    ],
+    "notes": [
+      "`parenthesized` flag raises on a minus inside parens, and `except ArithmeticError` maps '-(45.00)' and other bad text to ValueError.",
+      "Separate tests for '(45.00)', '-(45.00)' ValueError, between() with on-start/inside/on-end/after, zero-padded sorted keys with a sum, and the 16.99 guard.",
+      "Five focused tests, bodies match names, no redundancy beyond the harmless `== sorted(keys)` restatement.",
+      "One inline comment on the raise; docstring not updated with the new ValueError.",
+      "Only the three fixes plus the exception mapping; `parenthesized` is a one-word flag, no extra scope.",
+      "`import pytest` inside the test function instead of with the module imports; core.py edits otherwise match the fixture's style."
+    ]
+  },
+  "S08": {
+    "scores": [
+      2,
+      2,
+      2,
+      0,
+      1,
+      1
+    ],
+    "notes": [
+      "`if negative: raise` rejects '(-45.00)' and `except ArithmeticError` turns '-(45.00)' (and other garbage) into ValueError.",
+      "Separate tests for '(45.00)', '-(45.00)' ValueError, between() with before/on-start/middle/on-end/after, zero-padded sorted keys with a sum, and the 16.99 guard.",
+      "Five tests with one purpose each; names and bodies agree.",
+      "No comment or docstring change explains the new ValueError; the raise is bare and README untouched.",
+      "`if parenthesized and s.startswith(\"-\"): raise` is unreachable: when parenthesized, `negative` is True and the preceding branch already raised on any leading '-', so this is dead code.",
+      "`import pytest` inside the test function; `start, end = ...` tuple assignment and named Entry variables otherwise read like the fixture."
+    ]
+  }
+}

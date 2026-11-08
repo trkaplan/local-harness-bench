@@ -1,0 +1,87 @@
+[0m
+> build · qwen-flash-next
+[0m→ [0mRead . 
+[0m✱ [0mGlob "**/*.py" [90m6 matches[0m
+> build · qwen-flash-next
+[0m→ [0mRead todo/storage.py 
+[0m→ [0mRead todo/cli.py 
+[0m→ [0mRead tests/test_service.py 
+[0m→ [0mRead todo/models.py 
+[0m→ [0mRead README.md 
+[0m→ [0mRead todo/service.py 
+[0m→ [0mRead todo/__init__.py 
+> build · qwen-flash-next
+[0m← [0mWrite todo/sqlite_store.py
+Created file successfully: todo/sqlite_store.py
+> build · qwen-flash-next
+[0m← [0mEdit todo/storage.py
+Index: todo/storage.py
+===================================================================
+--- todo/storage.py
++++ todo/storage.py
+@@ -2,8 +2,9 @@
+ from __future__ import annotations
+ import json
+ from pathlib import Path
+ from .models import Task
++from .sqlite_store import SqliteStore
+ 
+ 
+ class JsonStore:
+     def __init__(self, path: Path):
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/storage.py
+Index: todo/storage.py
+===================================================================
+--- todo/storage.py
++++ todo/storage.py
+@@ -21,4 +21,12 @@
+         self.path.write_text(json.dumps([t.to_dict() for t in tasks], indent=2))
+ 
+     def next_id(self, tasks: list[Task]) -> int:
+         return (max((t.id for t in tasks), default=0) + 1)
++
++
++def open_store(path: str | Path):
++    """Return a JsonStore for *.json paths, otherwise a SqliteStore."""
++    path = Path(path)
++    if path.suffix == ".json":
++        return JsonStore(path)
++    return SqliteStore(path)
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/service.py
+Index: todo/service.py
+===================================================================
+--- todo/service.py
++++ todo/service.py
+@@ -35,4 +35,13 @@
+         new = [t for t in tasks if t.id != task_id]
+         if len(new) == len(tasks):
+             raise KeyError(task_id)
+         self.store.save(new)
++
++    def rename(self, task_id: int, new_title: str) -> Task:
++        tasks = self.store.load()
++        for t in tasks:
++            if t.id == task_id:
++                t.title = new_title
++                self.store.save(tasks)
++                return t
++        raise KeyError(task_id)
+
+> build · qwen-flash-next
+[0m← [0mWrite todo/cli.py
+Wrote file successfully: todo/cli.py
+> build · qwen-flash-next
+[0m← [0mWrite tests/test_sqlite.py
+Created file successfully: tests/test_sqlite.py
+> build · qwen-flash-next
+[0m← [0mWrite README.md
+Wrote file successfully: README.md
+> build · qwen-flash-next
+[0m$ [0m$HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q
+.............                                                            [100%]
+13 passed in 0.03s
+> build · qwen-flash-next

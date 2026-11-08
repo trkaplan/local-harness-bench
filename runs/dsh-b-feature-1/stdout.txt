@@ -1,0 +1,19 @@
+All done — **18 tests pass** (3 original + 15 new).
+
+## What changed
+
+**`todo/sqlite_store.py` (new)** — `SqliteStore(path)` with the same interface as `JsonStore`: `load()`, `save()`, `next_id()`. Standard library only (`sqlite3`, `json`). Creates `tasks(id INTEGER PRIMARY KEY, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, tags TEXT NOT NULL)` with `tags` as a JSON list. `save()` replaces the full contents in one explicit `BEGIN`/`COMMIT` transaction (with `ROLLBACK` on error — verified that a mid-insert failure preserves prior rows). `next_id` is identical to `JsonStore`.
+
+**`todo/storage.py`** — added `open_store(path: str | Path)`: `.json` → `JsonStore`, anything else → `SqliteStore`. The `SqliteStore` import is deferred inside the function so the two modules don't import each other at load time.
+
+**`todo/cli.py`** — `--file` default is now `~/.todo.db` (still overridable via `TODO_FILE`); `build_service` uses `open_store`, so `--file x.json` keeps working. New `rename ID TITLE` → `renamed #ID` (exit 1 / `no task #ID` for unknown ids), and `migrate SRC DST`.
+
+**`todo/service.py`** — `rename(task_id, new_title)` returns the updated `Task`, raises `KeyError` for unknown ids; store type hint widened.
+
+**`todo/cli.py::cmd_migrate`** — resolves both backends by extension, copies all tasks verbatim (ids, done, `created_at`, tags), prints `migrated N tasks`. The destination emptiness check runs **before** any write, so a rejected migrate leaves the destination untouched — and for a non-SQLite destination it isn't created at all (`SqliteStore._connect` is what would `mkdir`/create the file, and it only runs on the actual read/write).
+
+**`tests/test_sqlite.py` (new)** — round-trip, exact schema/column assertions, full-replace semantics, `next_id`, service-on-SQLite, factory, `rename` (service + CLI), `migrate` both directions, non-empty destination for SQLite *and* JSON targets, plus a JSON→SQLite→JSON test asserting the data comes back identical. **README.md** rewritten to document the SQLite default, extension-based backend choice, and `migrate`.
+
+Two verification notes worth flagging:
+- I confirmed `migrate` on an empty/nonexistent source exits 0 printing `migrated 0 tasks` without creating stray files, that source-then-destination byte equality holds across a double migration, and that repeated migration into a populated store fails without mutation.
+- One judgement call: on a corrupt source file (e.g. malformed JSON) `migrate` raises the underlying exception rather than returning 1. The spec only defines exit 1 for the non-empty-destination case, so I left the failure loud rather than silently reporting success — say the word if you'd prefer a caught error with exit 1 and a stderr message.

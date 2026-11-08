@@ -1,0 +1,12 @@
+All 9 tests pass. Summary of fixes in `ledger/core.py`:
+
+1. **`parse_amount`** — Track `parenthesized` separately; `-(45.00)` (minus sign + accounting parens) now raises `ValueError` instead of flipping the sign to positive. Also wrapped `Decimal(s)` conversion so malformed input raises `ValueError` rather than `decimal.InvalidOperation`. `(45.00)` still returns `Decimal("-45.00")`.
+2. **`Ledger.between`** — Changed `start <= e.day < end` to `start <= e.day <= end` so the end date is included, matching the docstring.
+3. **`monthly_totals`** — Key format changed from `f"{year}-{month}"` to `f"{year:04d}-{month:02d}"`, producing zero-padded `YYYY-MM` keys that sort correctly as strings.
+4. **`apply_discount`** — Already correct (`19.99 × 0.85 = 16.9915` → `16.99` half-up); left unchanged and added a regression test confirming it.
+
+Regression tests added to `tests/test_core.py`:
+- `test_parse_accounting_negative` / `test_parse_minus_with_parens_is_invalid`
+- `test_between_includes_end_date`
+- `test_monthly_totals_zero_padded_and_sorted`
+- `test_discount_half_up_rounding`

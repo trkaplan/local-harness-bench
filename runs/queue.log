@@ -1,0 +1,32 @@
+=== 12:54:57 start opencode a-bugfix 1
+{"harness":"opencode","task":"a-bugfix","run":1,"exit":0,"wall_s":40,"llm_calls":11,"prompt_tokens":110212,"completion_tokens":2544,"length_finishes":0,"hidden_pass":true,"hidden_summary":"7 passed in 0.00s","visible_pass":true,"visible_summary":"9 passed in 0.00s","external_conns":0,"started":"2026-11-08T12:54:58"}
+=== 13:24:57 start mini a-bugfix 1
+bin/run-one.sh: line 45: unexpected EOF while looking for matching `"'
+bin/run-one.sh: line 46: syntax error: unexpected end of file
+=== 13:26:03 start dsh a-bugfix 1
+{"harness":"dsh","task":"a-bugfix","run":1,"exit":0,"wall_s":114,"llm_calls":26,"prompt_tokens":315854,"completion_tokens":7512,"length_finishes":0,"hidden_pass":true,"hidden_summary":"7 passed in 0.01s","visible_pass":true,"visible_summary":"8 passed in 0.00s","external_conns":0,"started":"2026-11-08T13:26:04"}
+=== 13:27:58 start pi b-feature 1
+{"harness":"pi","task":"b-feature","run":1,"exit":0,"wall_s":62,"llm_calls":18,"prompt_tokens":83136,"completion_tokens":3981,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"14 passed in 0.02s","external_conns":0,"started":"2026-11-08T13:27:58"}
+=== 13:29:00 start opencode b-feature 1
+{"harness":"opencode","task":"b-feature","run":1,"exit":0,"wall_s":81,"llm_calls":17,"prompt_tokens":212204,"completion_tokens":4961,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"17 passed in 0.02s","external_conns":0,"started":"2026-11-08T13:29:00"}
+=== 13:30:21 start mini b-feature 1
+{"harness":"mini","task":"b-feature","run":1,"exit":0,"wall_s":59,"llm_calls":11,"prompt_tokens":57500,"completion_tokens":3843,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"13 passed in 0.02s","external_conns":0,"started":"2026-11-08T13:30:21"}
+=== 13:31:21 start dsh b-feature 1
+{"harness":"dsh","task":"b-feature","run":1,"exit":0,"wall_s":213,"llm_calls":38,"prompt_tokens":640831,"completion_tokens":12820,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"18 passed in 0.03s","external_conns":0,"started":"2026-11-08T13:31:21"}
+=== 13:34:54 start pi a-bugfix 2
+{"harness":"pi","task":"a-bugfix","run":2,"exit":0,"wall_s":30,"llm_calls":9,"prompt_tokens":29337,"completion_tokens":1792,"length_finishes":0,"hidden_pass":true,"hidden_summary":"7 passed in 0.00s","visible_pass":true,"visible_summary":"9 passed in 0.00s","external_conns":0,"started":"2026-11-08T13:34:54"}
+=== 13:35:24 start opencode a-bugfix 2
+{"harness":"opencode","task":"a-bugfix","run":2,"exit":0,"wall_s":40,"llm_calls":10,"prompt_tokens":94544,"completion_tokens":2048,"length_finishes":0,"hidden_pass":true,"hidden_summary":"7 passed in 0.00s","visible_pass":true,"visible_summary":"8 passed in 0.00s","external_conns":0,"started":"2026-11-08T13:35:24"}
+=== 13:36:04 start mini a-bugfix 2
+{"harness":"mini","task":"a-bugfix","run":2,"exit":0,"wall_s":41,"llm_calls":11,"prompt_tokens":42917,"completion_tokens":2191,"length_finishes":0,"hidden_pass":true,"hidden_summary":"7 passed in 0.00s","visible_pass":true,"visible_summary":"8 passed in 0.00s","external_conns":0,"started":"2026-11-08T13:36:04"}
+=== 13:36:45 start dsh a-bugfix 2
+{"harness":"dsh","task":"a-bugfix","run":2,"exit":0,"wall_s":132,"llm_calls":25,"prompt_tokens":288965,"completion_tokens":7678,"length_finishes":0,"hidden_pass":true,"hidden_summary":"7 passed in 0.00s","visible_pass":true,"visible_summary":"8 passed in 0.00s","external_conns":0,"started":"2026-11-08T13:36:45"}
+=== 13:38:57 start pi b-feature 2
+{"harness":"pi","task":"b-feature","run":2,"exit":0,"wall_s":70,"llm_calls":19,"prompt_tokens":95787,"completion_tokens":4143,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"13 passed in 0.02s","external_conns":0,"started":"2026-11-08T13:38:57"}
+=== 13:40:07 start opencode b-feature 2
+{"harness":"opencode","task":"b-feature","run":2,"exit":0,"wall_s":92,"llm_calls":21,"prompt_tokens":261157,"completion_tokens":5007,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"14 passed in 0.03s","external_conns":0,"started":"2026-11-08T13:40:08"}
+=== 13:41:40 start mini b-feature 2
+{"harness":"mini","task":"b-feature","run":2,"exit":0,"wall_s":63,"llm_calls":11,"prompt_tokens":57665,"completion_tokens":3732,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"11 passed in 0.02s","external_conns":0,"started":"2026-11-08T13:41:40"}
+=== 13:42:44 start dsh b-feature 2
+{"harness":"dsh","task":"b-feature","run":2,"exit":0,"wall_s":205,"llm_calls":33,"prompt_tokens":519295,"completion_tokens":11843,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"28 passed in 0.03s","external_conns":0,"started":"2026-11-08T13:42:44"}
+=== 13:46:10 queue done

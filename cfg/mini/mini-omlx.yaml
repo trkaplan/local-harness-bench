@@ -1,0 +1,15 @@
+# mini-swe-agent config for the local oMLX endpoint. Merged over the default mini.yaml.
+model:
+  model_name: "openai/qwen-flash-next"
+  cost_tracking: "ignore_errors"
+  model_kwargs:
+    drop_params: true
+    api_base: "http://127.0.0.1:8018/v1"
+    api_key: "local"
+    temperature: 0.7
+    top_p: 0.8
+    presence_penalty: 1.5
+    max_tokens: 16384
+    extra_body:
+      top_k: 20
+      chat_template_kwargs: { enable_thinking: false }

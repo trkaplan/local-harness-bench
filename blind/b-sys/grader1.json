@@ -1,0 +1,98 @@
+{
+  "S01": {"scores": [1, 1, 2, 2, 2, 2], "notes": [
+    "sqlite_store.py: `with self._connect() as conn` commits but never closes the connection; load() has no exists() check so reading a missing path creates an empty .db (JsonStore does not)",
+    "No test for req 3's default path / TODO_FILE override; store, factory, migrate (both directions + non-empty) and rename (service KeyError + CLI) are covered",
+    "8 tests, each with one purpose; roundtrip test bundles 'save replaces' with a comment, and migrate_json_to_sqlite compares created_at to itself then only asserts non-empty (weak but not wrong)",
+    "README: 15 lines, code block plus one migrate paragraph; covers new default, TODO_FILE, .json rule, migrate failure; fits the terse voice",
+    "Only requested changes; small `_migrate` helper is justified; storage.py docstring updated to 'Storage backends'",
+    "Matches original: one-line Task(...) in load, parenthesised next_id, `; return 1` style kept in rename branch"
+  ]},
+  "S02": {"scores": [1, 1, 1, 2, 2, 2], "notes": [
+    "load() guards `self.path.exists()` like JsonStore, but connections are only used as transaction context managers and never closed",
+    "No test for req 3's default path / TODO_FILE; all other numbered requirements have a test (migrate both ways, non-empty dest, rename KeyError and CLI)",
+    "test_sqlite_roundtrip line `assert tasks[0].created_at == tasks[0].created_at` is a tautology; dead `t2 = 2`; test_sqlite_save_replaces_and_next_id bundles two behaviours; migrate tests pass a needless `--file src`",
+    "README: 5 added lines in the original's terse voice; new default, TODO_FILE, .json rule, migrate with extension rule and empty-destination note",
+    "Inline migrate block in main, nothing beyond the spec",
+    "Keeps `print(...); return 1` one-liner style, one-line Task(...) via tuple unpacking; only drift is two blank lines inside main"
+  ]},
+  "S03": {"scores": [1, 2, 1, 2, 2, 1], "notes": [
+    "No connection close (`with ... as conn` only manages the transaction) and no exists() check, so load() on a missing path creates the file",
+    "Only submission with a test for req 3: test_cli_default_uses_sqlite sets TODO_FILE and checks the SQLite file is used; all other requirements also covered",
+    "`store.next_id([]) == 1` is asserted in both test_sqlite_save_replaces_contents (off-topic for that test) and test_sqlite_next_id; several `main(...)` calls in CLI tests ignore the return code",
+    "README: 13 lines, code block with examples and the non-empty failure message; proportionate",
+    "Nothing unrequested; build_service passes the str path straight to open_store",
+    "Multi-line Task(...) and triple-quoted CREATE TABLE are more spread out than the original's one-liners; Sphinx `:class:` roles in open_store docstring are foreign to this codebase"
+  ]},
+  "S04": {"scores": [2, 1, 1, 2, 2, 1], "notes": [
+    "load() has exists() check, both load and save use try/finally conn.close() with `with conn:` for the single transaction",
+    "No test for req 3's default path / TODO_FILE; req 4's sqlite->json direction is tested only as a side effect of the non-empty test",
+    "test_migrate_sqlite_to_json_and_nonempty_dest bundles two distinct req-4 behaviours and checks the unchanged destination only by length",
+    "README: 10 lines of prose covering default, TODO_FILE, .json rule, migrate and rename; matches the original's style",
+    "Scope is on-spec; `TodoService.__init__(self, store)` untyped is a defensible 1-line change for the new backend",
+    "Leaves `from .storage import JsonStore` unused in service.py; lazy `from .sqlite_store import SqliteStore` inside open_store and a quoted `\"str | Path\"` annotation despite `from __future__ import annotations`"
+  ]},
+  "S05": {"scores": [1, 1, 2, 2, 2, 2], "notes": [
+    "exists() check in load() mirrors JsonStore, but connections from `with self._connect() as conn` are never closed",
+    "No test for req 3's default path / TODO_FILE; store (roundtrip, missing file, replace, next_id), factory, migrate both ways + non-empty, rename KeyError + CLI all covered",
+    "make_tasks() helper with fixed created_at/done/tags; each test has one purpose and migrate tests assert full Task equality across stores",
+    "README: 8 lines, bullet list of examples plus the `destination not empty` rule; concise and in voice",
+    "Nothing beyond the spec; migrate is an inline block in main",
+    "Keeps `print(...); return 1` one-liners, parenthesised next_id, module docstring in the same phrasing as storage.py"
+  ]},
+  "S06": {"scores": [1, 1, 2, 2, 2, 2], "notes": [
+    "No connection close and no exists() check, so load() on a missing path creates an empty database file (also for a mistyped migrate SRC)",
+    "No test for req 3's default path / TODO_FILE; other requirements each have a test, including migrate non-empty leaving the destination untouched",
+    "8 distinct tests; roundtrip checks id/title/done/tags/created_at, next_id, factory incl. extensionless path, both migrate directions, rename service + CLI",
+    "README: 17 lines using the `todo` script name from pyproject; shows TODO_FILE, JSON backend and migrate; a bit longer than needed but clear",
+    "Migrate handled as an `elif` branch in main (service built but unused for migrate); otherwise exactly the spec",
+    "Quoted `\"str | Path\"` annotation and `str(path).endswith(\".json\")` are minor; one-line Task(...) and `; return 1` style preserved"
+  ]},
+  "S07": {"scores": [1, 1, 2, 1, 2, 1], "notes": [
+    "Connections never closed; no exists() check so load() creates the file for a missing path",
+    "No test for req 3's default path / TODO_FILE; store, factory (incl. `x.JSON.bak`), migrate both ways + non-empty, rename KeyError + CLI covered",
+    "sample_tasks() helper; tests are distinct, migrate tests assert full equality with the source list; test_sqlite_service_roundtrip exercises the service over SQLite as its own purpose",
+    "README names the internal `open_store` function and enumerates every command; 17 lines for a 3-line original",
+    "`_migrate` helper and `-> JsonStore | SqliteStore` return annotation are small and justified",
+    "Multi-line Task(...) in load, triple-quoted CREATE, dropped parentheses in next_id; tests import SqliteStore via storage re-export instead of its module"
+  ]},
+  "S08": {"scores": [1, 1, 1, 1, 2, 1], "notes": [
+    "Connections never closed; load() without exists() check creates the database file on read",
+    "No test for req 3's default path / TODO_FILE; migrate both directions, non-empty destination, rename KeyError and CLI covered",
+    "test_sqlite_roundtrip ends with `store.next_id(loaded) == 5` while a separate test_sqlite_next_id_empty exists, splitting next_id across a mislabeled test and a one-assert test",
+    "README: 22 lines listing add/list --all/done/rm/rename plus two migrate examples; over-long against the terse original",
+    "Migrate as an `elif` branch after build_service (service built unnecessarily) but nothing out of scope",
+    "Multi-line Task(...) in load and triple-quoted CREATE differ from the original one-liner style; docstring and factory otherwise fit"
+  ]},
+  "S09": {"scores": [1, 1, 2, 2, 2, 1], "notes": [
+    "exists() check in load(), but connections from `with self._connect() as conn` are never closed",
+    "No test for req 3's default path / TODO_FILE; store (roundtrip, replace, next_id, tags JSON column), factory, migrate both ways + non-empty, rename + unknown id + CLI covered",
+    "15 tests, each distinct (open_store split into json/sqlite/str tests is granular but not redundant); rename service and KeyError separated cleanly",
+    "README: 11 lines with examples and a single migrate paragraph; in voice",
+    "Removes the now-unused JsonStore import from service.py and untypes `store`, both tied to the new backend; nothing else extra",
+    "Multi-line Task(...) in load and triple-quoted CREATE; section banner comments in the test file are not used elsewhere in the repo"
+  ]},
+  "S10": {"scores": [2, 1, 2, 1, 2, 2], "notes": [
+    "exists() check in load(); both load and save close the connection in try/finally with `with conn:` for the one transaction",
+    "No test for req 3's default path / TODO_FILE; store, factory, migrate both ways + non-empty, rename KeyError + CLI covered",
+    "Each test has one purpose; migrate tests set up via TodoService and assert ids/done/created_at/tags; one redundant `before[0].title` assert in the non-empty test",
+    "README adds a `## Migrating between backends` heading and 21 lines to a 3-line README; content correct but longer and more structured than the original",
+    "`cmd_migrate(src_arg, dst_arg)` helper is small and dispatched before build_service; nothing unrequested",
+    "One-line Task(...), parenthesised next_id, `; return 1` style, docstring phrasing matches storage.py"
+  ]},
+  "S11": {"scores": [2, 1, 2, 1, 1, 1], "notes": [
+    "exists() check in load(); connections closed in try/finally with `with conn:` around DELETE+INSERT",
+    "No test for req 3's default path / TODO_FILE; store, factory, migrate both ways + non-empty (asserts dst equals `before`), rename KeyError + CLI covered",
+    "8 distinct tests with clear purposes; CLI rename checks output, list and unknown-id exit code",
+    "README: 24 lines listing every command (add/list/done/rename/rm) and two migrate examples; over-long for the original's voice",
+    "main() intercepts `argv[0] == \"migrate\"` and builds a second ArgumentParser in cmd_migrate while also registering a `migrate` subparser that re-calls cmd_migrate([src, dst]); two parsing paths for one command, the pre-dispatch is dead weight",
+    "The argv pre-dispatch breaks the single-parser convention of cli.py; otherwise store and service match the original style"
+  ]},
+  "S12": {"scores": [1, 1, 1, 2, 2, 2], "notes": [
+    "Connections never closed; no exists() check so load() creates the database file on a missing path",
+    "No test for req 3's default path / TODO_FILE; store, factory, migrate both ways + non-empty, rename KeyError + CLI (incl. stderr message) covered",
+    "test_sqlite_save_replaces_and_next_id bundles complete, remove, next_id and id reuse in one function; several `main(...)` calls in migrate/CLI tests do not assert the return code",
+    "README: 11 lines, code block with four examples and one migrate paragraph; proportionate",
+    "Inline migrate block in main, nothing outside the spec",
+    "One-line Task(...), `; return 1` style, same docstring phrasing as storage.py; only drift is dropped parentheses in next_id"
+  ]}
+}

@@ -1,0 +1,203 @@
+[0m
+> build · qwen-flash-next
+[0m$ [0mfind . -type f -name "*.py" -o -name "*.md" -o -name "*.toml" -o -name "*.cfg" | grep -v ".git/" | head -50
+./.pytest_cache/README.md
+./pyproject.toml
+./tests/test_service.py
+./todo/service.py
+./todo/models.py
+./todo/__init__.py
+./todo/cli.py
+./todo/storage.py
+./README.md
+> build · qwen-flash-next
+[0m→ [0mRead todo/models.py 
+> build · qwen-flash-next
+[0m→ [0mRead todo/storage.py 
+> build · qwen-flash-next
+[0m→ [0mRead todo/cli.py 
+> build · qwen-flash-next
+[0m→ [0mRead todo/service.py 
+> build · qwen-flash-next
+[0m→ [0mRead tests/test_service.py 
+> build · qwen-flash-next
+[0m→ [0mRead README.md 
+> build · qwen-flash-next
+[0m→ [0mRead pyproject.toml 
+> build · qwen-flash-next
+[0m→ [0mRead todo/__init__.py 
+> build · qwen-flash-next
+[0m← [0mWrite todo/sqlite_store.py
+Created file successfully: todo/sqlite_store.py
+> build · qwen-flash-next
+[0m← [0mEdit todo/storage.py
+Index: todo/storage.py
+===================================================================
+--- todo/storage.py
++++ todo/storage.py
+@@ -2,8 +2,9 @@
+ from __future__ import annotations
+ import json
+ from pathlib import Path
+ from .models import Task
++from .sqlite_store import SqliteStore
+ 
+ 
+ class JsonStore:
+     def __init__(self, path: Path):
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/storage.py
+Index: todo/storage.py
+===================================================================
+--- todo/storage.py
++++ todo/storage.py
+@@ -21,4 +21,12 @@
+         self.path.write_text(json.dumps([t.to_dict() for t in tasks], indent=2))
+ 
+     def next_id(self, tasks: list[Task]) -> int:
+         return (max((t.id for t in tasks), default=0) + 1)
++
++
++def open_store(path: str | Path) -> JsonStore | SqliteStore:
++    """Return the store matching the file extension: .json -> JsonStore, else SqliteStore."""
++    path = Path(path)
++    if path.suffix == ".json":
++        return JsonStore(path)
++    return SqliteStore(path)
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/service.py
+Index: todo/service.py
+===================================================================
+--- todo/service.py
++++ todo/service.py
+@@ -29,8 +29,17 @@
+                 self.store.save(tasks)
+                 return t
+         raise KeyError(task_id)
+ 
++    def rename(self, task_id: int, new_title: str) -> Task:
++        tasks = self.store.load()
++        for t in tasks:
++            if t.id == task_id:
++                t.title = new_title
++                self.store.save(tasks)
++                return t
++        raise KeyError(task_id)
++
+     def remove(self, task_id: int) -> None:
+         tasks = self.store.load()
+         new = [t for t in tasks if t.id != task_id]
+         if len(new) == len(tasks):
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -2,18 +2,18 @@
+ import argparse
+ import os
+ import sys
+ from pathlib import Path
+-from .storage import JsonStore
++from .storage import open_store
+ from .service import TodoService
+ 
+ 
+ def default_path() -> Path:
+-    return Path(os.environ.get("TODO_FILE", Path.home() / ".todo.json"))
++    return Path(os.environ.get("TODO_FILE", Path.home() / ".todo.db"))
+ 
+ 
+ def build_service(args) -> TodoService:
+-    return TodoService(JsonStore(Path(args.file)))
++    return TodoService(open_store(args.file))
+ 
+ 
+ def main(argv: list[str] | None = None) -> int:
+     p = argparse.ArgumentParser(prog="todo")
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -22,8 +22,10 @@
+     a = sub.add_parser("add"); a.add_argument("title"); a.add_argument("--tag", action="append", default=[])
+     l = sub.add_parser("list"); l.add_argument("--all", action="store_true"); l.add_argument("--tag")
+     d = sub.add_parser("done"); d.add_argument("id", type=int)
+     r = sub.add_parser("rm"); r.add_argument("id", type=int)
++    n = sub.add_parser("rename"); n.add_argument("id", type=int); n.add_argument("title")
++    m = sub.add_parser("migrate"); m.add_argument("src"); m.add_argument("dst")
+     args = p.parse_args(argv)
+     svc = build_service(args)
+     if args.cmd == "add":
+         t = svc.add(args.title, args.tag)
+
+> build · qwen-flash-next
+[0m→ [0mRead todo/cli.py 
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -25,8 +25,16 @@
+     r = sub.add_parser("rm"); r.add_argument("id", type=int)
+     n = sub.add_parser("rename"); n.add_argument("id", type=int); n.add_argument("title")
+     m = sub.add_parser("migrate"); m.add_argument("src"); m.add_argument("dst")
+     args = p.parse_args(argv)
++    if args.cmd == "migrate":
++        src, dst = open_store(args.src), open_store(args.dst)
++        if dst.load():
++            print("destination not empty", file=sys.stderr); return 1
++        tasks = src.load()
++        dst.save(tasks)
++        print(f"migrated {len(tasks)} tasks")
++        return 0
+     svc = build_service(args)
+     if args.cmd == "add":
+         t = svc.add(args.title, args.tag)
+         print(f"added #{t.id}: {t.title}")
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -54,8 +54,14 @@
+             svc.remove(args.id)
+         except KeyError:
+             print(f"no task #{args.id}", file=sys.stderr); return 1
+         print(f"removed #{args.id}")
++    elif args.cmd == "rename":
++        try:
++            svc.rename(args.id, args.title)
++        except KeyError:
++            print(f"no task #{args.id}", file=sys.stderr); return 1
++        print(f"renamed #{args.id}")
+     return 0
+ 
+ 
+ if __name__ == "__main__":
+
+> build · qwen-flash-next
+[0m← [0mWrite tests/test_sqlite.py
+Created file successfully: tests/test_sqlite.py
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-p2/repo && $HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q 2>&1 | tail -20
+.........                                                                [100%]
+9 passed in 0.02s
+> build · qwen-flash-next
+[0m← [0mWrite README.md
+Wrote file successfully: README.md
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-p2/repo && $HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q 2>&1 | tail -5
+.........                                                                [100%]
+9 passed in 0.02s
+> build · qwen-flash-next

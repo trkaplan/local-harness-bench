@@ -1,0 +1,39 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "update": "disable",
+  "share": "disabled",
+  "provider": {
+    "omlx": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "oMLX (local)",
+      "options": {
+        "baseURL": "http://127.0.0.1:8018/v1",
+        "apiKey": "local"
+      },
+      "models": {
+        "qwen-flash-next": {
+          "name": "Qwen3.8 Flash Next (oMLX)",
+          "limit": {
+            "context": 65536,
+            "output": 16384
+          },
+          "options": {
+            "temperature": 0.7,
+            "topP": 0.8,
+            "presencePenalty": 1.5,
+            "extraBody": {
+              "top_k": 20,
+              "chat_template_kwargs": {
+                "enable_thinking": false
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "model": "omlx/qwen-flash-next",
+  "disabled_providers": [
+    "opencode"
+  ]
+}

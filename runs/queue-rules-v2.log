@@ -1,0 +1,14 @@
+23:20:14 start pi p1
+{"harness":"pi","task":"b-feature","run":"p1","exit":0,"wall_s":51,"llm_calls":21,"prompt_tokens":101511,"completion_tokens":3410,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 
+23:21:05 start pi p2
+{"harness":"pi","task":"b-feature","run":"p2","exit":0,"wall_s":66,"llm_calls":18,"prompt_tokens":102912,"completion_tokens":3944,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 
+23:22:11 start mini p1
+{"harness":"mini","task":"b-feature","run":"p1","exit":0,"wall_s":74,"llm_calls":17,"prompt_tokens":96394,"completion_tokens":3265,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in
+23:23:26 start mini p2
+{"harness":"mini","task":"b-feature","run":"p2","exit":0,"wall_s":73,"llm_calls":14,"prompt_tokens":84588,"completion_tokens":4009,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in
+23:24:39 start opencode p1
+{"harness":"opencode","task":"b-feature","run":"p1","exit":1,"wall_s":85,"llm_calls":16,"prompt_tokens":187283,"completion_tokens":2855,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 pass
+23:26:05 start opencode p2
+{"harness":"opencode","task":"b-feature","run":"p2","exit":0,"wall_s":105,"llm_calls":24,"prompt_tokens":280966,"completion_tokens":3781,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 pas
+leftovers: none
+23:27:50 ALL DONE

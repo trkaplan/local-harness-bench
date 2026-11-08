@@ -1,0 +1,307 @@
+diff --git a/README.md b/README.md
+index 0c22eae..6fd1f06 100644
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,17 @@
+ # todo
+ 
+-A small CLI todo manager backed by a JSON file. `python -m todo.cli --file t.json add "x"`.
++A small CLI todo manager. By default it stores tasks in SQLite at `~/.todo.db`
++(override with `--file PATH` or the `TODO_FILE` env var). The backend is chosen
++by extension: `.json` uses a JSON file, anything else uses SQLite.
++
++```
++python -m todo.cli add "x"                 # writes to ~/.todo.db
++python -m todo.cli --file t.json add "x"   # JSON backend
++python -m todo.cli rename 1 "new title"
++python -m todo.cli migrate old.json new.db # copy tasks between backends (either direction)
++```
++
++`migrate` preserves ids, done flags, `created_at` and tags, and refuses to
++touch a non-empty destination.
++
+ Tests: `python -m pytest -q`.
+diff --git a/tests/test_sqlite.py b/tests/test_sqlite.py
+new file mode 100644
+index 0000000..706b734
+--- /dev/null
++++ b/tests/test_sqlite.py
+@@ -0,0 +1,122 @@
++import sqlite3
++from pathlib import Path
++from todo.models import Task
++from todo.service import TodoService
++from todo.sqlite_store import SqliteStore
++from todo.storage import JsonStore, open_store
++
++
++def test_sqlite_roundtrip_preserves_fields(tmp_path: Path):
++    store = SqliteStore(tmp_path / "t.db")
++    tasks = [Task(id=2, title="a", done=True, created_at="2024-01-01T00:00:00+00:00", tags=["x", "y"])]
++    store.save(tasks)
++    assert store.load() == tasks
++    assert store.next_id(store.load()) == 3
++    assert SqliteStore(tmp_path / "empty.db").next_id([]) == 1
++
++
++def test_sqlite_schema(tmp_path: Path):
++    path = tmp_path / "t.db"
++    SqliteStore(path).save([Task.new(1, "a")])
++    cols = {r[1]: r for r in sqlite3.connect(path).execute("PRAGMA table_info(tasks)")}
++    assert list(cols) == ["id", "title", "done", "created_at", "tags"]
++    assert cols["id"][5] == 1  # pk
++    for name in ("title", "done", "created_at", "tags"):
++        assert cols[name][3] == 1, f"{name} must be NOT NULL"
++    assert cols["done"][4] == "0"  # DEFAULT 0
++
++
++def test_sqlite_save_replaces_atomically(tmp_path: Path):
++    store = SqliteStore(tmp_path / "t.db")
++    store.save([Task.new(1, "keep"), Task.new(2, "drop")])
++    store.save([Task.new(5, "only")])
++    assert [t.title for t in store.load()] == ["only"]
++    try:  # a failing insert must roll back the whole replace
++        store.save([Task(id=6, title=None, created_at="x", tags=[])])
++    except sqlite3.IntegrityError:
++        pass
++    else:
++        raise AssertionError("expected IntegrityError")
++    assert [t.title for t in store.load()] == ["only"]
++
++
++def test_sqlite_service_works(tmp_path: Path):
++    svc = TodoService(SqliteStore(tmp_path / "t.db"))
++    t = svc.add("via sqlite", ["db"])
++    svc.complete(t.id)
++    assert [x.id for x in svc.list(include_done=True)] == [t.id]
++
++
++def test_open_store_factory_picks_backend(tmp_path: Path):
++    assert isinstance(open_store(tmp_path / "t.json"), JsonStore)
++    assert isinstance(open_store(tmp_path / "t.db"), SqliteStore)
++    assert isinstance(open_store(str(tmp_path / "t.sqlite")), SqliteStore)
++
++
++def test_cli_default_file_is_sqlite(tmp_path: Path, monkeypatch):
++    from todo.cli import default_path
++    monkeypatch.delenv("TODO_FILE", raising=False)
++    assert default_path() == Path.home() / ".todo.db"
++    monkeypatch.setenv("TODO_FILE", str(tmp_path / "custom.json"))
++    assert default_path() == tmp_path / "custom.json"
++
++
++def test_migrate_json_to_sqlite(tmp_path: Path, capsys):
++    from todo.cli import main
++    src, dst = tmp_path / "src.json", tmp_path / "dst.db"
++    main(["--file", str(src), "add", "one", "--tag", "work"])
++    main(["--file", str(src), "add", "two"])
++    main(["--file", str(src), "done", "1"])
++    assert main(["migrate", str(src), str(dst)]) == 0
++    assert "migrated 2 tasks" in capsys.readouterr().out
++    moved = SqliteStore(dst).load()
++    assert [(t.id, t.title, t.done, t.tags) for t in moved] == [(1, "one", True, ["work"]), (2, "two", False, [])]
++    assert moved[0].created_at == JsonStore(src).load()[0].created_at
++
++
++def test_migrate_sqlite_to_json(tmp_path: Path, capsys):
++    from todo.cli import main
++    src, dst = tmp_path / "src.db", tmp_path / "dst.json"
++    main(["--file", str(src), "add", "reverse"])
++    assert main(["migrate", str(src), str(dst)]) == 0
++    assert "migrated 1 tasks" in capsys.readouterr().out
++    assert [t.title for t in JsonStore(dst).load()] == ["reverse"]
++
++
++def test_migrate_rejects_non_empty_destination(tmp_path: Path, capsys):
++    from todo.cli import main
++    src = tmp_path / "src.json"
++    dst = tmp_path / "dst.db"
++    main(["--file", str(src), "add", "source"])
++    main(["--file", str(dst), "add", "existing"])
++    before = SqliteStore(dst).load()
++    capsys.readouterr()
++    assert main(["migrate", str(src), str(dst)]) == 1
++    err = capsys.readouterr().err
++    assert "destination not empty" in err
++    assert SqliteStore(dst).load() == before
++
++
++def test_rename_updates_title(tmp_path: Path):
++    svc = TodoService(SqliteStore(tmp_path / "t.db"))
++    t = svc.add("old name")
++    updated = svc.rename(t.id, "new name")
++    assert updated.title == "new name"
++    assert [x.title for x in svc.list()] == ["new name"]
++    try:
++        svc.rename(999, "x")
++    except KeyError:
++        pass
++    else:
++        raise AssertionError("expected KeyError")
++
++
++def test_cli_rename(tmp_path: Path, capsys):
++    from todo.cli import main
++    f = str(tmp_path / "t.json")
++    main(["--file", f, "add", "before"])
++    assert main(["--file", f, "rename", "1", "after"]) == 0
++    assert "renamed #1" in capsys.readouterr().out
++    main(["--file", f, "list"])
++    assert "#1 after" in capsys.readouterr().out
++    assert main(["--file", f, "rename", "7", "nope"]) == 1
+diff --git a/todo/cli.py b/todo/cli.py
+index 1f8cd5c..4ec17d0 100644
+--- a/todo/cli.py
++++ b/todo/cli.py
+@@ -3,16 +3,16 @@ import argparse
+ import os
+ import sys
+ from pathlib import Path
+-from .storage import JsonStore
++from .storage import open_store
+ from .service import TodoService
+ 
+ 
+ def default_path() -> Path:
+-    return Path(os.environ.get("TODO_FILE", Path.home() / ".todo.json"))
++    return Path(os.environ.get("TODO_FILE", Path.home() / ".todo.db"))
+ 
+ 
+ def build_service(args) -> TodoService:
+-    return TodoService(JsonStore(Path(args.file)))
++    return TodoService(open_store(Path(args.file)))
+ 
+ 
+ def main(argv: list[str] | None = None) -> int:
+@@ -23,7 +23,11 @@ def main(argv: list[str] | None = None) -> int:
+     l = sub.add_parser("list"); l.add_argument("--all", action="store_true"); l.add_argument("--tag")
+     d = sub.add_parser("done"); d.add_argument("id", type=int)
+     r = sub.add_parser("rm"); r.add_argument("id", type=int)
++    n = sub.add_parser("rename"); n.add_argument("id", type=int); n.add_argument("title")
++    m = sub.add_parser("migrate"); m.add_argument("src"); m.add_argument("dst")
+     args = p.parse_args(argv)
++    if args.cmd == "migrate":
++        return _migrate(args.src, args.dst)
+     svc = build_service(args)
+     if args.cmd == "add":
+         t = svc.add(args.title, args.tag)
+@@ -45,6 +49,23 @@ def main(argv: list[str] | None = None) -> int:
+         except KeyError:
+             print(f"no task #{args.id}", file=sys.stderr); return 1
+         print(f"removed #{args.id}")
++    elif args.cmd == "rename":
++        try:
++            svc.rename(args.id, args.title)
++        except KeyError:
++            print(f"no task #{args.id}", file=sys.stderr); return 1
++        print(f"renamed #{args.id}")
++    return 0
++
++
++def _migrate(src: str, dst: str) -> int:
++    src_store, dst_store = open_store(Path(src)), open_store(Path(dst))
++    if dst_store.load():
++        print("destination not empty", file=sys.stderr)
++        return 1
++    tasks = src_store.load()
++    dst_store.save(tasks)
++    print(f"migrated {len(tasks)} tasks")
+     return 0
+ 
+ 
+diff --git a/todo/service.py b/todo/service.py
+index eee013e..4fa0d01 100644
+--- a/todo/service.py
++++ b/todo/service.py
+@@ -30,6 +30,15 @@ class TodoService:
+                 return t
+         raise KeyError(task_id)
+ 
++    def rename(self, task_id: int, new_title: str) -> Task:
++        tasks = self.store.load()
++        for t in tasks:
++            if t.id == task_id:
++                t.title = new_title
++                self.store.save(tasks)
++                return t
++        raise KeyError(task_id)
++
+     def remove(self, task_id: int) -> None:
+         tasks = self.store.load()
+         new = [t for t in tasks if t.id != task_id]
+diff --git a/todo/sqlite_store.py b/todo/sqlite_store.py
+new file mode 100644
+index 0000000..33e6501
+--- /dev/null
++++ b/todo/sqlite_store.py
+@@ -0,0 +1,46 @@
++"""SQLite storage backend (standard library only). The whole table is rewritten on every change."""
++from __future__ import annotations
++import json
++import sqlite3
++from pathlib import Path
++from .models import Task
++
++COLUMNS = (
++    "id INTEGER PRIMARY KEY, "
++    "title TEXT NOT NULL, "
++    "done INTEGER NOT NULL DEFAULT 0, "
++    "created_at TEXT NOT NULL, "
++    "tags TEXT NOT NULL"
++)
++
++SCHEMA = f"CREATE TABLE IF NOT EXISTS tasks ({COLUMNS})"
++
++
++class SqliteStore:
++    def __init__(self, path: Path):
++        self.path = Path(path)
++
++    def _connect(self) -> sqlite3.Connection:
++        self.path.parent.mkdir(parents=True, exist_ok=True)
++        conn = sqlite3.connect(self.path)
++        conn.execute(SCHEMA)
++        return conn
++
++    def load(self) -> list[Task]:
++        with self._connect() as conn:
++            rows = conn.execute("SELECT id, title, done, created_at, tags FROM tasks ORDER BY id").fetchall()
++        return [
++            Task(id=r[0], title=r[1], done=bool(r[2]), created_at=r[3], tags=list(json.loads(r[4])))
++            for r in rows
++        ]
++
++    def save(self, tasks: list[Task]) -> None:
++        with self._connect() as conn:
++            conn.execute("DELETE FROM tasks")
++            conn.executemany(
++                "INSERT INTO tasks (id, title, done, created_at, tags) VALUES (?, ?, ?, ?, ?)",
++                [(t.id, t.title, int(bool(t.done)), t.created_at, json.dumps(list(t.tags or []))) for t in tasks],
++            )
++
++    def next_id(self, tasks: list[Task]) -> int:
++        return (max((t.id for t in tasks), default=0) + 1)
+diff --git a/todo/storage.py b/todo/storage.py
+index 74b75f2..d728b38 100644
+--- a/todo/storage.py
++++ b/todo/storage.py
+@@ -3,6 +3,7 @@ from __future__ import annotations
+ import json
+ from pathlib import Path
+ from .models import Task
++from .sqlite_store import SqliteStore
+ 
+ 
+ class JsonStore:
+@@ -21,3 +22,11 @@ class JsonStore:
+ 
+     def next_id(self, tasks: list[Task]) -> int:
+         return (max((t.id for t in tasks), default=0) + 1)
++
++
++def open_store(path: str | Path):
++    """Return the store implementation matching the path extension."""
++    path = Path(path)
++    if path.suffix == ".json":
++        return JsonStore(path)
++    return SqliteStore(path)

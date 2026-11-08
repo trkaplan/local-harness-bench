@@ -1,0 +1,21 @@
+Done — all six requirements are implemented and the full suite passes (**28 passed**: 3 pre-existing + 25 new).
+
+## What changed
+
+**New `todo/sqlite_store.py`** — `SqliteStore(path)` with `load()` / `save()` / `next_id()`, stdlib `sqlite3` only. Table `tasks` with exactly the required columns (`id INTEGER PRIMARY KEY, title TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, tags TEXT NOT NULL`), `tags` JSON-encoded. `save()` does `DELETE` + `executemany INSERT` inside one `with conn:` transaction, so a failure rolls back; `next_id` matches `JsonStore` (`max+1`, 1 when empty).
+
+**`todo/storage.py`** — added `open_store(path: str | Path)` returning `JsonStore` for a `.json` suffix, `SqliteStore` otherwise. `JsonStore` untouched.
+
+**`todo/cli.py`** — default `--file` is now `~/.todo.db` (still overridable by `TODO_FILE`); all paths go through `open_store`, so `--file x.json` keeps working. Added `rename ID TITLE` (prints `renamed #ID`, exit 1 + `no task #ID` on unknown id) and `migrate SRC DST`, which resolves both backends by extension, refuses a non-empty destination with `destination not empty` on stderr / exit 1 before touching it, and otherwise copies everything preserving ids, done flags, `created_at` and tags, printing `migrated N tasks`.
+
+**`todo/service.py`** — added `rename(task_id, new_title)` returning the updated `Task` and raising `KeyError` for unknown ids. I also replaced the `store: JsonStore` annotation with a small `Store` `Protocol`, since the constructor now legitimately accepts either backend (behaviour unchanged).
+
+**`tests/test_sqlite_store.py`** — 25 tests: round-trip fidelity, missing-file, parent-dir creation, full replacement, `next_id`, a real `PRAGMA table_info` schema check plus raw JSON tag encoding, factory dispatch, service `rename`, CLI default path/env/backend, JSON path still JSON, rename, and migrate in both directions including field-by-field preservation, empty source, and both non-empty-destination cases asserting the destination bytes are unmodified.
+
+**`README.md`** — documents the SQLite default, extension-based selection, and `migrate` including its exit-1 behaviour.
+
+## Verification notes
+
+Beyond the suite, I smoke-tested the CLI end to end (SQLite default confirmed as a real SQLite file via `file`, `--file x.json` still writing JSON, rename, both migrate directions, and stderr/exit codes).
+
+One correction worth mentioning: my first attempt to verify save atomicity was invalid — the harness died on a bug in *my own* wrapper before the `DELETE` ran, so it proved nothing. I rebuilt it to `SIGKILL` the process strictly after the `DELETE` (exit 137, confirmed) and verified on reopen that the pre-existing rows survived intact — the transaction rollback is genuinely crash-safe. This was an out-of-band check; I didn't encode the crash test in the suite since it needs process tricks that would make the tests brittle.

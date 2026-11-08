@@ -1,0 +1,13 @@
+22:55:14 start pi r1
+{"harness":"pi","task":"b-feature","run":r1,"exit":0,"wall_s":303,"llm_calls":62,"prompt_tokens":948879,"completion_tokens":15646,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"14 passed in 0.02s","external_conns":0,"started":"2026-11-08T22:55:14"}
+23:00:17 start pi r2
+{"harness":"pi","task":"b-feature","run":r2,"exit":0,"wall_s":46,"llm_calls":13,"prompt_tokens":64351,"completion_tokens":3412,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"9 passed in 0.02s","external_conns":0,"started":"2026-11-08T23:00:18"}
+23:01:04 start mini r1
+{"harness":"mini","task":"b-feature","run":r1,"exit":0,"wall_s":51,"llm_calls":13,"prompt_tokens":74910,"completion_tokens":3267,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"10 passed in 0.02s","external_conns":0,"started":"2026-11-08T23:01:04"}
+23:01:56 start mini r2
+{"harness":"mini","task":"b-feature","run":r2,"exit":0,"wall_s":64,"llm_calls":15,"prompt_tokens":78325,"completion_tokens":3294,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"9 passed in 0.02s","external_conns":0,"started":"2026-11-08T23:01:56"}
+23:03:01 start opencode r1
+{"harness":"opencode","task":"b-feature","run":r1,"exit":1,"wall_s":0,"llm_calls":0,"prompt_tokens":0,"completion_tokens":0,"length_finishes":0,"hidden_pass":false,"hidden_summary":"1 error in 0.04s","visible_pass":true,"visible_summary":"3 passed in 0.01s","external_conns":0,"started":"2026-11-08T23:03:01"}
+23:03:02 start opencode r2
+{"harness":"opencode","task":"b-feature","run":r2,"exit":1,"wall_s":0,"llm_calls":0,"prompt_tokens":0,"completion_tokens":0,"length_finishes":0,"hidden_pass":false,"hidden_summary":"1 error in 0.04s","visible_pass":true,"visible_summary":"3 passed in 0.01s","external_conns":0,"started":"2026-11-08T23:03:02"}
+23:03:02 ALL DONE

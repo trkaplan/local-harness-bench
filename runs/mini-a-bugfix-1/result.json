@@ -1,0 +1,1 @@
+{"harness":"mini","task":"a-bugfix","run":1,"exit":0,"wall_s":43,"llm_calls":9,"prompt_tokens":40884,"completion_tokens":2447,"length_finishes":0,"hidden_pass":true,"hidden_summary":"7 passed in 0.00s","visible_pass":true,"visible_summary":"9 passed in 0.00s","external_conns":0,"started":"2026-11-08T13:46:20"}

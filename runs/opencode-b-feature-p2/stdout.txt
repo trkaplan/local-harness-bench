@@ -1,0 +1,34 @@
+I'll start by exploring the repository structure.
+Now I understand the codebase. Let me implement the changes.
+
+**1. New module `todo/sqlite_store.py`:**
+**2. Add `open_store` factory to `todo/storage.py`:**
+**5. Add `rename` to `todo/service.py`:**
+**3 & 4. Update CLI: default path, `open_store`, `rename`, and `migrate` subcommands:**
+Now add the `rename` and `migrate` handling. Let me check the current state:
+The `migrate` command shouldn't depend on the `--file` store, so I'll move service construction into the branches that need it and add `rename`/`migrate`:
+**6. Add tests:**
+All tests pass.
+
+1. ✔ SQLite store (`sqlite_store.py`) — `test_sqlite_store_roundtrip`
+2. ✔ `open_store` factory — `test_open_store_factory`
+3. ✔ CLI default `~/.todo.db` + uses `open_store` — `test_rename_cli` exercises the `open_store` path (`.db` → SQLite); the default/`TODO_FILE` logic is unchanged except the extension
+4. ✔ `migrate` — `test_migrate_json_to_sqlite` + `test_migrate_into_non_empty_fails`
+5. ✔ `rename` — `test_rename_service` + `test_rename_cli`
+6. Tests added ✔ — now update README.
+All requirements are implemented and covered. Final verification of the full suite:
+All 9 tests pass (3 existing + 6 new). Summary of changes:
+
+**`todo/sqlite_store.py`** (new) — `SqliteStore(path)` with `load()`, `save()`, `next_id()`, matching `JsonStore`'s interface. Uses only `sqlite3`; table `tasks` with the specified schema (`tags` JSON-encoded). `save()` clears and re-inserts in a single transaction (atomic).
+
+**`todo/storage.py`** — added `open_store(path)` factory: `.json` → `JsonStore`, otherwise `SqliteStore`.
+
+**`todo/cli.py`** — default `--file` is now `~/.todo.db` (still overridable via `TODO_FILE`); uses `open_store`; added `rename ID TITLE` (prints `renamed #ID`) and `migrate SRC DST` subcommands. `migrate` fails with exit code 1 and `destination not empty` on stderr for a non-empty destination, leaving it untouched.
+
+**`todo/service.py`** — added `rename(task_id, new_title)` returning the updated `Task`, raising `KeyError` for unknown ids.
+
+**`tests/test_sqlite.py`** (new) — one focused test per requirement: SQLite roundtrip, factory, migrate (both directions preserved via fields), migrate-into-non-empty failure, service rename, CLI rename.
+
+**`README.md`** — documents the new SQLite default and the `migrate` command.
+
+The diff is minimal and follows the existing code style (compact argparse setup, `try/except KeyError` error handling, inline `print(..., file=sys.stderr); return 1` pattern).

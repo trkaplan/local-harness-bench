@@ -1,0 +1,16 @@
+Now I'll apply the three fixes in `ledger/core.py`:
+Now add regression tests:
+All 9 tests pass. Quick final review of the fixed file:
+All three bugs are fixed in `ledger/core.py`, with a regression test for each added to `tests/test_core.py`. Test suite: **9 passed**.
+
+**Fixes:**
+
+1. **`parse_amount` accounting negatives** (`ledger/core.py:17-41`) — The old code flipped the sign for a `-` after stripping parentheses, so `-(45.00)` became `+45.00` instead of being rejected. Now a leading `-` immediately followed by `(` raises `ValueError`, and the sign-flip logic was replaced with an explicit check (a second `-` after the sign is already set also raises). Also, `Decimal()` conversion failures (`decimal.InvalidOperation`, an `ArithmeticError`) are wrapped into `ValueError`, so malformed input consistently raises `ValueError`. `parse_amount("(45.00)")` → `Decimal("-45.00")` ✓
+
+2. **`Ledger.between` end exclusivity** (`ledger/core.py:69`) — Changed `start <= e.day < end` to `start <= e.day <= end`, matching the documented inclusive-on-both-ends behavior.
+
+3. **`monthly_totals` key format** (`ledger/core.py:76`) — Changed `f"{e.day.year}-{e.day.month}"` to `f"{e.day.year:04d}-{e.day.month:02d}"`, producing zero-padded `YYYY-MM` keys (e.g. `2026-03`). The existing `sorted()` keeps them ascending as strings — which now works correctly across single-digit months.
+
+**Discount check:** `apply_discount(Decimal("19.99"), Decimal("15"))` was already correct (19.99 × 0.85 = 16.9915 → `16.99` half-up via `ROUND_HALF_UP`); left unchanged and pinned with `test_discount_half_up_rounding`.
+
+**New regression tests:** `test_parse_accounting_negative_parens`, `test_parse_minus_with_parens_is_invalid`, `test_between_includes_end_date`, `test_monthly_totals_zero_padded_sorted_keys`, `test_discount_half_up_rounding`. All public names and signatures are unchanged.

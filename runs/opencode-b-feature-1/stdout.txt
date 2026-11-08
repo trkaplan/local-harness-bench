@@ -1,0 +1,17 @@
+I'll start by exploring the repository structure.
+Now I understand the codebase. Let me implement all the changes.
+Now the factory in `storage.py`:
+Now `service.py` — add `rename` and generalize the store type hint:
+Now update the CLI:
+Now the tests:
+Now update the README:
+All 17 tests pass (3 existing + 14 new). Quick sanity check that the CLI default and atomic save behave correctly:
+Everything works end-to-end. Final test run to confirm:
+All done — **17 tests pass** (3 existing + 14 new). Summary of changes:
+
+- **`todo/sqlite_store.py`** (new): `SqliteStore(path)` with `load()`/`save()`/`next_id()`, using only `sqlite3`. Table `tasks` with the exact required schema (`tags` JSON-encoded). `save()` replaces all rows in a single transaction (the `with conn:` block commits delete + bulk insert atomically). `next_id` matches `JsonStore` (`max(id)+1`, 1 when empty).
+- **`todo/storage.py`**: added `open_store(path)` factory — `JsonStore` for `.json` suffix, `SqliteStore` otherwise.
+- **`todo/cli.py`**: default `--file` is now `~/.todo.db` (still overridable via `TODO_FILE`); uses `open_store`, so `--file x.json` keeps working. Added `rename ID TITLE` (prints `renamed #ID`) and `migrate SRC DST` (checks destination is empty first, prints `migrated N tasks`; on non-empty destination writes `destination not empty` to stderr and returns 1 without touching it).
+- **`todo/service.py`**: added `rename(task_id, new_title)` returning the updated `Task`, raising `KeyError` for unknown ids; store type hint generalized so both backends work.
+- **`tests/test_sqlite_storage.py`** (new): covers SQLite roundtrip/save-replace/next_id/tags encoding, service over SQLite, the factory (both directions, str and Path inputs), migrate both directions with full field preservation, non-empty destination failure (verifying the destination stays untouched), and rename at service + CLI level.
+- **`README.md`**: documents the new SQLite default, `TODO_FILE`, JSON via `.json` paths, `rename`, and `migrate`.

@@ -1,0 +1,98 @@
+{
+  "S01": {"scores": [1, 1, 2, 2, 2, 2], "notes": [
+    "sqlite_store.py uses `with self._connect() as conn` which commits but never closes the connection; load() guards on path.exists()",
+    "no test for requirement 3 (default `~/.todo.db` / TODO_FILE override); reqs 1,2,4,5 covered (test_sqlite_store_*, test_open_store_*, test_migrate_*, test_*rename*)",
+    "14 tests, each with one purpose; test_sqlite_store_tags_json_encoded checks the JSON tags column, test_migrate_into_non_empty_fails checks dst untouched",
+    "README: new default, JSON via .json, TODO_FILE, rename and migrate examples, non-empty failure; concise and in the original voice",
+    "only requested changes; dropped the now-wrong `store: JsonStore` hint in service.py, which the change requires",
+    "open_store in storage.py, CLI branches mirror the existing done/rm blocks; same one-line subparser style"
+  ]},
+  "S02": {"scores": [1, 1, 1, 2, 2, 2], "notes": [
+    "`with self._connect() as conn` never closes the connection; load() has no exists() guard so a read creates the db file",
+    "no test for requirement 3 (default path / TODO_FILE); other requirements covered",
+    "6 tests but bundled: test_cli_migrate_json_to_sqlite also tests the non-empty failure, test_sqlite_store_roundtrip also tests next_id, rename uses hand-rolled try/except",
+    "README covers default `~/.todo.db`, TODO_FILE, .json backend, migrate example and rename in the original length",
+    "nothing extra, but migrate calls `src.load()` twice (`dst.save(src.load())` then `len(src.load())`)",
+    "compact SQL string and one-line Task construction match the dense style of storage.py/models.py"
+  ]},
+  "S03": {"scores": [1, 1, 2, 2, 2, 2], "notes": [
+    "`with self._connect() as conn` never closes the connection; no exists() guard in load()",
+    "no test for requirement 3 (default path / TODO_FILE); reqs 1,2,4,5 each have a dedicated test",
+    "sample_tasks() fixture, one purpose per test, factory test also checks `x.JSON.bak` falls to sqlite, non-empty test verifies dst untouched",
+    "README explains default, .json backend, TODO_FILE, rename, migrate with example and error message; mentions the internal `open_store` name, minor",
+    "only requested work; `_migrate` helper is a reasonable extraction; docstring of storage.py updated to match",
+    "`__init__(self, path: Path | str)` and `str(path).endswith('.json')` are small deviations; CLI branches mirror existing ones"
+  ]},
+  "S04": {"scores": [1, 2, 2, 2, 2, 2], "notes": [
+    "`with self._connect() as conn` never closes the connection; no exists() guard in load()",
+    "all six requirements tested, including test_cli_default_file_is_sqlite (default `~/.todo.db` and TODO_FILE override)",
+    "test_sqlite_save_replaces_atomically actually forces an IntegrityError and checks rollback; test_sqlite_schema pins only the spec-dictated columns; no duplicates",
+    "README: default, override, extension rule, examples for rename and migrate, non-empty rule; proportionate",
+    "COLUMNS/SCHEMA module constants are slight extra structure but serve the schema requirement; nothing unrequested",
+    "`_migrate` helper and CLI branches match existing style; module docstring echoes the storage.py phrasing"
+  ]},
+  "S05": {"scores": [2, 1, 2, 1, 1, 1], "notes": [
+    "connections closed in try/finally, save() wraps the transaction in `with conn:`, load() guards on exists()",
+    "no test for requirement 3 (default path / TODO_FILE); reqs 1,2,4,5 covered",
+    "8 tests, each distinct; test_sqlite_next_id exercises max+1 after a remove, non-empty test checks dst unchanged",
+    "README re-documents every pre-existing command (add/list/done/rm) and grows to ~25 lines; over-long for a 3-line README",
+    "migrate is dispatched twice: `cmd_migrate` builds its own ArgumentParser and main() intercepts `argv[0] == 'migrate'` before argparse, plus a regular subparser; main() now reads sys.argv itself",
+    "duplicated parsing path and a second ArgumentParser are foreign to the single-parser cli.py"
+  ]},
+  "S06": {"scores": [1, 2, 1, 2, 2, 1], "notes": [
+    "`with self._connect() as conn` never closes the connection; no exists() guard in load()",
+    "test_cli_default_uses_sqlite covers the TODO_FILE override through main() (not the literal `~/.todo.db` value); all other requirements covered",
+    "`next_id([]) == 1` asserted in both test_sqlite_save_replaces_contents and test_sqlite_next_id; save_replaces only checks save([])",
+    "README explains default, extension rule, TODO_FILE, rename and migrate with the error message; right length",
+    "only requested changes; build_service passes str to open_store, which the factory accepts",
+    "Sphinx `:class:` roles in the open_store docstring and blank-line-grouped imports in the test file differ from the codebase's plain style"
+  ]},
+  "S07": {"scores": [1, 1, 2, 2, 2, 2], "notes": [
+    "`with self._connect() as conn` never closes the connection; no exists() guard in load()",
+    "no test for requirement 3 (default path / TODO_FILE); reqs 1,2,4,5 covered",
+    "11 tests, one purpose each; test_migrate_json_to_sqlite builds a done task with explicit created_at/tags via from_dict and checks all four fields",
+    "README: default, override, extension rule, examples, migrate with exit code and message; uses the `todo` entry point defined in pyproject",
+    "only requested work; migrate branch sits after build_service(args) so a store for --file is constructed needlessly, but without side effects",
+    "migrate as an `elif` beside the other commands, same one-line parser additions; `path: str | Path` on SqliteStore is a small deviation"
+  ]},
+  "S08": {"scores": [1, 2, 1, 1, 2, 1], "notes": [
+    "`with self._connect() as conn` never closes the connection; no exists() guard in load()",
+    "test_cli_default_file_is_db checks `~/.todo.db` (not the TODO_FILE override); all requirements have a test",
+    "test_migrate_json_to_sqlite_and_back covers json->sqlite, sqlite->json and the non-empty failure in one test; roundtrip also bundles next_id",
+    "README mentions new default, TODO_FILE, .json rule and migrate, but omits the new rename command and the error message; thin",
+    "nothing unrequested",
+    "lazy `from .sqlite_store import SqliteStore` inside open_store with no circular-import reason; service.py drops the type hint but leaves the now-unused JsonStore import"
+  ]},
+  "S09": {"scores": [1, 2, 1, 1, 2, 1], "notes": [
+    "`with self._connect() as conn` never closes the connection; no exists() guard in load()",
+    "test_cli_default_file_is_sqlite checks `~/.todo.db` (not the TODO_FILE override); all requirements have a test",
+    "test_cli_rename_and_migrate mixes two requirements; test_sqlite_store_roundtrip also asserts next_id; test_sqlite_schema is a good spec check",
+    "README is two dense paragraphs covering default, TODO_FILE, .json and migrate; omits the rename command and the error message",
+    "nothing unrequested",
+    "lazy import of SqliteStore inside open_store; tuple-unpacking row comprehension is fine but differs from the rest"
+  ]},
+  "S10": {"scores": [2, 2, 1, 2, 2, 1], "notes": [
+    "connections closed in try/finally, transaction via `with conn:`, exists() guard in load()",
+    "test_cli_rename_and_default_file checks the TODO_FILE override of default_path; all requirements have a test",
+    "test_cli_rename_and_default_file bundles two unrelated requirements; migrate test also covers the non-empty failure; roundtrip also covers next_id",
+    "README: default, TODO_FILE, .json rule, rename and migrate examples, error message; proportionate",
+    "only requested work; `do_migrate` helper is a reasonable extraction",
+    "lazy import inside open_store; build_service drops the `Path(...)` wrap; migrate dispatched after build_service unlike the other early-return designs"
+  ]},
+  "S11": {"scores": [1, 2, 1, 1, 2, 1], "notes": [
+    "`with self._connect() as conn` never closes the connection; no exists() guard in load()",
+    "test_cli_default_path_is_sqlite checks both TODO_FILE override and `~/.todo.db`; all requirements have a test",
+    "test_sqlite_store_roundtrip bundles roundtrip, replace and next_id; migrate test bundles the non-empty failure; unused `import os` in the default-path test",
+    "README covers default, TODO_FILE, .json rule and migrate in two lines; omits the rename command",
+    "nothing unrequested",
+    "lazy import of SqliteStore at the top of open_store; `path: str | Path` on SqliteStore; tests pass a meaningless `--file dst` to migrate"
+  ]},
+  "S12": {"scores": [2, 1, 2, 2, 2, 2], "notes": [
+    "connections closed in try/finally, transaction via `with conn:`, exists() guard in load()",
+    "no test for requirement 3 (default path / TODO_FILE); reqs 1,2,4,5 each have a dedicated test",
+    "10 tests, one purpose each; only blemish is a redundant `assert before[0].title == 'existing'` in test_migrate_nonempty_destination",
+    "README: default, .json rule, --file/TODO_FILE, rename example, migrate section with example and empty-destination rule",
+    "only requested work; `cmd_migrate` helper is a reasonable extraction",
+    "storage.py imports SqliteStore at module level, CLI branches mirror done/rm, docstring updated in the original phrasing"
+  ]}
+}

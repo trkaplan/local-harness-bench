@@ -1,0 +1,29 @@
+I'll start by exploring the existing codebase structure.
+Now I'll implement all the changes.
+Now update the CLI:
+Now the tests:
+One test has a stray line; let me simplify it:
+Now update the README and run the tests:
+My mistake — the CLI subcommand is `done`, not `complete`. Re-running the manual check:
+全部 13 个测试均已通过（3 个原有测试 + 10 个新测试），手动 CLI 冒烟测试也确认了端到端行为。
+
+## 完成内容
+
+**1. `todo/sqlite_store.py`（新建）** — `SqliteStore(path)` 提供 `load()`/`save()`/`next_id()`，仅使用 `sqlite3` + `json`。架构与要求完全一致（`tasks` 表，五个指定的列，`tags` 以 JSON 编码）。`save()` 通过 `with conn:` 块内的 `DELETE` + `executemany INSERT` 替换整个表（单事务，提交或回滚）。`next_id` 的逻辑与 `JsonStore` 相同。
+→ 测试覆盖：`test_sqlite_store_roundtrip`（数据、created_at、tags、next_id）、`test_sqlite_save_replaces_contents`、`test_sqlite_schema`（通过 PRAGMA 固定列名/类型）。
+
+**2. `todo/storage.py`** — 工厂函数 `open_store(path)`：`.json` → `JsonStore`，否则 → `SqliteStore`。
+→ 测试覆盖：`test_open_store_factory`（三种情况）。
+
+**3. CLI 默认值** — `default_path()` 现为 `~/.todo.db`（`TODO_FILE` 环境变量仍可覆盖），并且 `build_service` 使用 `open_store`，因此 `--file x.json` 仍会走 JSON 路径（现有测试依赖该路径）。
+→ 测试覆盖：`test_cli_default_file_is_sqlite`；JSON 路径继续由现有测试覆盖。
+
+**4. `migrate SRC DST`** — 两个存储都通过 `open_store` 打开（由扩展名选择方向），如果目标存储非空则中止，并在写入*之前*检查，因此目标存储不会被修改；打印 `migrated N tasks`，所有字段原样复制，因为 Task 对象会原样往返传递。
+→ 测试覆盖：`test_migrate_json_to_sqlite`（字段保真度）、`test_migrate_sqlite_to_json`、`test_migrate_non_empty_destination_fails`（退出码 1、stderr 消息、目标存储未变更）。
+
+**5. `rename`** — `TodoService.rename(task_id, new_title)` 返回更新后的 Task，对未知 id 抛出 `KeyError`；CLI `rename ID TITLE` 打印 `renamed #ID`（未知 id 时退出码 1，与其他子命令保持一致）。
+→ 测试覆盖：`test_rename`（服务层，含 KeyError）、`test_cli_rename_and_migrate`（输出 + 未知 id）。
+
+**6. README** — 描述了新的 SQLite 默认值、`.json` 路径仍使用 JSON、`TODO_FILE` 覆盖方式，以及 `migrate` 命令。
+
+测试套件中每一处删除任何一项编号更改都会导致至少一个测试失败，且没有检查存在重复。

@@ -1,0 +1,124 @@
+diff --git a/ledger/core.py b/ledger/core.py
+index 721a5e3..16680a6 100644
+--- a/ledger/core.py
++++ b/ledger/core.py
+@@ -15,7 +15,11 @@ class Entry:
+ 
+ 
+ def parse_amount(text: str) -> Decimal:
+-    """Parse amounts like '1,234.50', '-12', '(45.00)' (accounting negative), '€ 3.10'."""
++    """Parse amounts like '1,234.50', '-12', '(45.00)' (accounting negative), '€ 3.10'.
++
++    Accounting parentheses and a leading minus sign may not be combined:
++    '-(45.00)' is invalid and raises ``ValueError``.
++    """
+     s = text.strip()
+     negative = False
+     if s.startswith("(") and s.endswith(")"):
+@@ -23,9 +27,15 @@ def parse_amount(text: str) -> Decimal:
+         s = s[1:-1]
+     s = s.replace(",", "").replace("€", "").replace("$", "").strip()
+     if s.startswith("-"):
+-        negative = not negative
++        if negative:
++            # '-(45.00)' double-negates an accounting negative: ambiguous input.
++            raise ValueError(f"invalid amount: {text!r}")
++        negative = True
+         s = s[1:]
+-    value = Decimal(s)
++    try:
++        value = Decimal(s)
++    except ArithmeticError as exc:  # InvalidOperation is an ArithmeticError
++        raise ValueError(f"invalid amount: {text!r}") from exc
+     return -value if negative else value
+ 
+ 
+@@ -54,13 +64,13 @@ class Ledger:
+ 
+     def between(self, start: date, end: date) -> list[Entry]:
+         """Entries with start <= day <= end (inclusive on both ends)."""
+-        return [e for e in self.entries if start <= e.day < end]
++        return [e for e in self.entries if start <= e.day <= end]
+ 
+ 
+ def monthly_totals(entries: list[Entry]) -> dict[str, Decimal]:
+     """Map 'YYYY-MM' -> sum of amounts for that month, keys sorted ascending."""
+     out: dict[str, Decimal] = {}
+     for e in entries:
+-        key = f"{e.day.year}-{e.day.month}"
++        key = f"{e.day.year:04d}-{e.day.month:02d}"
+         out[key] = out.get(key, Decimal(0)) + e.amount
+     return dict(sorted(out.items()))
+diff --git a/tests/test_core.py b/tests/test_core.py
+index 209bcf1..f2141f5 100644
+--- a/tests/test_core.py
++++ b/tests/test_core.py
+@@ -1,6 +1,8 @@
+ from datetime import date
+ from decimal import Decimal
+ 
++import pytest
++
+ from ledger import Ledger, Entry, parse_amount, apply_discount, monthly_totals
+ 
+ 
+@@ -21,3 +23,59 @@ def test_balance_all():
+ 
+ def test_discount_basic():
+     assert apply_discount(Decimal("100"), Decimal("10")) == Decimal("90.00")
++
++
++# --- regression tests -------------------------------------------------------
++
++
++def test_parse_amount_accounting_negative_with_minus_sign_is_invalid():
++    # Bug 1: accounting parentheses combined with a minus sign is ambiguous.
++    assert parse_amount("(45.00)") == Decimal("-45.00")
++
++    with pytest.raises(ValueError) as excinfo:
++        parse_amount("-(45.00)")
++    # decimal.InvalidOperation is itself a ValueError subclass and used to leak
++    # out of Decimal(s); the public contract must be a plain ValueError.
++    assert type(excinfo.value) is ValueError
++
++    # ... and the unambiguous forms still work.
++    assert parse_amount("-45.00") == Decimal("-45.00")
++    assert parse_amount("(1,234.50)") == Decimal("-1234.50")
++
++
++def test_between_includes_end_date():
++    # Bug 2: between() is documented as inclusive on both ends.
++    l = Ledger()
++    l.add(Entry(date(2026, 1, 1), "cash", Decimal("1")))
++    l.add(Entry(date(2026, 1, 2), "cash", Decimal("2")))
++    l.add(Entry(date(2026, 1, 3), "cash", Decimal("3")))
++    l.add(Entry(date(2026, 1, 4), "cash", Decimal("4")))
++
++    days = [e.day for e in l.between(date(2026, 1, 2), date(2026, 1, 3))]
++    assert days == [date(2026, 1, 2), date(2026, 1, 3)]
++    # A single-day window returns that day's entries.
++    assert [e.day for e in l.between(date(2026, 1, 2), date(2026, 1, 2))] == [
++        date(2026, 1, 2)
++    ]
++
++
++def test_monthly_totals_keys_zero_padded_and_sorted():
++    # Bug 3: keys were '2026-3', which also sorted wrongly as strings.
++    entries = [
++        Entry(date(2026, 10, 2), "cash", Decimal("2")),
++        Entry(date(2026, 3, 1), "cash", Decimal("1")),
++        Entry(date(2026, 1, 5), "cash", Decimal("3")),
++        Entry(date(2026, 3, 30), "cash", Decimal("4")),
++    ]
++    totals = monthly_totals(entries)
++    assert totals == {
++        "2026-01": Decimal("3"),
++        "2026-03": Decimal("5"),
++        "2026-10": Decimal("2"),
++    }
++    assert list(totals) == sorted(totals) == ["2026-01", "2026-03", "2026-10"]
++
++
++def test_discount_half_up_to_cents():
++    # Guard: 19.99 * 0.85 == 16.9915 must round half-up to 16.99.
++    assert apply_discount(Decimal("19.99"), Decimal("15")) == Decimal("16.99")

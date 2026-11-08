@@ -1,0 +1,15 @@
+All done. Summary of changes:
+
+**`todo/sqlite_store.py`** (new) — `SqliteStore(path)` with `load()`/`save()`/`next_id()`, stdlib-only `sqlite3`, `tasks` table with the specified schema, tags JSON-encoded, `save()` atomic via single transaction (context manager commits/rolls back as one unit).
+
+**`todo/storage.py`** — added `open_store(path)` factory: `.json` → `JsonStore`, otherwise `SqliteStore`.
+
+**`todo/cli.py`** — default `--file` is now `~/.todo.db` (still `TODO_FILE`-overridable); uses `open_store`; added `migrate SRC DST` (non-empty destination → exit 1, `destination not empty` on stderr, untouched) and `rename ID TITLE`.
+
+**`todo/service.py`** — added `rename(task_id, new_title)` returning the updated Task, raising `KeyError` for unknown ids.
+
+**`tests/test_sqlite.py`** (new) — one focused test per requirement: SQLite roundtrip + `next_id`, factory dispatch, migrate JSON→SQLite (including non-empty failure preserving destination), migrate SQLite→JSON, service `rename` (+ KeyError), CLI `rename`. Existing tests untouched and passing.
+
+**`README.md`** — documents the SQLite default, `--file`/`TODO_FILE`, migrate, and rename.
+
+Test results: `9 passed`. Verified requirement coverage — each numbered requirement (1 store, 2 factory, 3 CLI default/env + open_store via migrate tests using `.db`/`.json`, 4 both migrate directions + guard, 5 service+CLI rename) has a test that fails if the feature is removed.

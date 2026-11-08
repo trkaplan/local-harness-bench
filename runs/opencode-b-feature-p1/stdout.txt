@@ -1,0 +1,7 @@
+I'll start by exploring the repository structure.
+Now let me check the git status and run existing tests:
+All existing tests pass. Now I'll implement the changes, starting with the SQLite store:
+I need to restructure the connection handling: Python's `sqlite3` legacy mode commits implicitly before DML statements, which breaks single-transaction atomicity. I'll use `isolation_level=None` with explicit `BEGIN`/`COMMIT`/`ROLLBACK`:
+Now the factory in `storage.py`:
+Now the `rename` service method:
+Now update the CLI — default path, `open_store`, and the `rename` and `migrate` subcommands:

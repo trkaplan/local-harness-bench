@@ -1,0 +1,42 @@
+# Home-level patch for the harness benchmark: local oMLX route only, no DeepSeek cloud, no uploads.
+- id: agent-default-model
+  config:
+    provider: omlx
+    model: qwen-flash-next
+
+- id: llm-pi-ai
+  config:
+    providers:
+      omlx:
+        displayName: oMLX local
+        api: openai-completions
+        baseURL: http://127.0.0.1:8018/v1
+        apiKeyEnv: OMLX_API_KEY
+        models:
+          - id: qwen-flash-next
+            name: Qwen3.8 Flash Next
+            contextWindow: 65536
+            maxTokens: 16384
+            reasoningEfforts: false
+
+- id: session-log-deepseek
+  config:
+    enabled: false
+
+- id: session-telemetry-otel
+  disabled: true
+
+- id: plugin-package-inventory-deepseek
+  disabled: true
+
+- id: web-search-deepseek
+  disabled: true
+
+- id: web-deepseek-api
+  disabled: true
+
+- id: llm-deepseek
+  disabled: true
+
+- id: llm-deepseek-account
+  disabled: true

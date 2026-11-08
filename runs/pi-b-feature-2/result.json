@@ -1,0 +1,1 @@
+{"harness":"pi","task":"b-feature","run":2,"exit":0,"wall_s":70,"llm_calls":19,"prompt_tokens":95787,"completion_tokens":4143,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"13 passed in 0.02s","external_conns":0,"started":"2026-11-08T13:38:57"}

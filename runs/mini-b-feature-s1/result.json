@@ -1,0 +1,1 @@
+{"harness":"mini","task":"b-feature","run":"s1","exit":0,"wall_s":50,"llm_calls":9,"prompt_tokens":39987,"completion_tokens":3186,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"10 passed in 0.02s","external_conns":0,"started":"2026-11-08T23:14:05"}

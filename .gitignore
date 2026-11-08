@@ -1,0 +1,11 @@
+src/
+tasks/.venv/
+__pycache__/
+.pytest_cache/
+runs/*/repo/
+cfg/opencode/data/
+cfg/opencode/cache/
+cfg/dsh/sessions/
+cfg/dsh/storages/
+*.pyc
+.DS_Store

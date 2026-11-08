@@ -1,0 +1,357 @@
+[0m
+> build · qwen-flash-next
+[0m$ [0mfind . -type f -name "*.py" -o -name "*.md" -o -name "*.toml" -o -name "*.cfg" | grep -v ".git/" | head -50
+./.pytest_cache/README.md
+./pyproject.toml
+./tests/test_service.py
+./todo/service.py
+./todo/models.py
+./todo/__init__.py
+./todo/cli.py
+./todo/storage.py
+./README.md
+> build · qwen-flash-next
+[0m→ [0mRead todo/models.py 
+[0m→ [0mRead todo/storage.py 
+[0m→ [0mRead todo/service.py 
+> build · qwen-flash-next
+[0m→ [0mRead README.md 
+[0m→ [0mRead todo/cli.py 
+[0m→ [0mRead tests/test_service.py 
+> build · qwen-flash-next
+[0m→ [0mRead pyproject.toml 
+[0m→ [0mRead todo/__init__.py 
+> build · qwen-flash-next
+[0m← [0mWrite todo/sqlite_store.py
+Created file successfully: todo/sqlite_store.py
+> build · qwen-flash-next
+[0m✗ [0mEdit todo/storage.py failed
+[91m[1mError: [0mInvalid arguments for tool "edit":
+- oldString: Missing key
+
+Arguments provided:
+{
+  "path": "./todo/storage.py",
+  "newString": "    def next_id(self, tasks: list[Task]) -> int:\n        return (max((t.id for t in tasks), default=0) + 1)\n\n\ndef open_store(path: str | Path):\n    \"\"\"Return the store that matches the file extension: JsonStore for .json, SqliteStore otherwise.\"\"\"\n    from .sqlite_store import SqliteStore\n\n    path = Path(path)\n    if path.suffix == \".json\":\n        return JsonStore(path)\n    return SqliteStore(path)"
+}
+
+Update the arguments and call the tool again.
+> build · qwen-flash-next
+[0m← [0mEdit todo/storage.py
+Index: todo/storage.py
+===================================================================
+--- todo/storage.py
++++ todo/storage.py
+@@ -20,4 +20,14 @@
+         self.path.write_text(json.dumps([t.to_dict() for t in tasks], indent=2))
+ 
+     def next_id(self, tasks: list[Task]) -> int:
+         return (max((t.id for t in tasks), default=0) + 1)
++
++
++def open_store(path: str | Path):
++    """Return the store matching the extension: JsonStore for .json, SqliteStore otherwise."""
++    from .sqlite_store import SqliteStore
++
++    path = Path(path)
++    if path.suffix == ".json":
++        return JsonStore(path)
++    return SqliteStore(path)
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/service.py
+Index: todo/service.py
+===================================================================
+--- todo/service.py
++++ todo/service.py
+@@ -35,4 +35,13 @@
+         new = [t for t in tasks if t.id != task_id]
+         if len(new) == len(tasks):
+             raise KeyError(task_id)
+         self.store.save(new)
++
++    def rename(self, task_id: int, new_title: str) -> Task:
++        tasks = self.store.load()
++        for t in tasks:
++            if t.id == task_id:
++                t.title = new_title
++                self.store.save(tasks)
++                return t
++        raise KeyError(task_id)
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -2,18 +2,18 @@
+ import argparse
+ import os
+ import sys
+ from pathlib import Path
+-from .storage import JsonStore
++from .storage import open_store
+ from .service import TodoService
+ 
+ 
+ def default_path() -> Path:
+-    return Path(os.environ.get("TODO_FILE", Path.home() / ".todo.json"))
++    return Path(os.environ.get("TODO_FILE", Path.home() / ".todo.db"))
+ 
+ 
+ def build_service(args) -> TodoService:
+-    return TodoService(JsonStore(Path(args.file)))
++    return TodoService(open_store(Path(args.file)))
+ 
+ 
+ def main(argv: list[str] | None = None) -> int:
+     p = argparse.ArgumentParser(prog="todo")
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -22,9 +22,19 @@
+     a = sub.add_parser("add"); a.add_argument("title"); a.add_argument("--tag", action="append", default=[])
+     l = sub.add_parser("list"); l.add_argument("--all", action="store_true"); l.add_argument("--tag")
+     d = sub.add_parser("done"); d.add_argument("id", type=int)
+     r = sub.add_parser("rm"); r.add_argument("id", type=int)
++    n = sub.add_parser("rename"); n.add_argument("id", type=int); n.add_argument("title")
++    m = sub.add_parser("migrate"); m.add_argument("src"); m.add_argument("dst")
+     args = p.parse_args(argv)
++    if args.cmd == "migrate":
++        src, dst = open_store(Path(args.src)), open_store(Path(args.dst))
++        if dst.load():
++            print("destination not empty", file=sys.stderr); return 1
++        tasks = src.load()
++        dst.save(tasks)
++        print(f"migrated {len(tasks)} tasks")
++        return 0
+     svc = build_service(args)
+     if args.cmd == "add":
+         t = svc.add(args.title, args.tag)
+         print(f"added #{t.id}: {t.title}")
+
+> build · qwen-flash-next
+[0m← [0mEdit todo/cli.py
+Index: todo/cli.py
+===================================================================
+--- todo/cli.py
++++ todo/cli.py
+@@ -54,8 +54,14 @@
+             svc.remove(args.id)
+         except KeyError:
+             print(f"no task #{args.id}", file=sys.stderr); return 1
+         print(f"removed #{args.id}")
++    elif args.cmd == "rename":
++        try:
++            svc.rename(args.id, args.title)
++        except KeyError:
++            print(f"no task #{args.id}", file=sys.stderr); return 1
++        print(f"renamed #{args.id}")
+     return 0
+ 
+ 
+ if __name__ == "__main__":
+
+> build · qwen-flash-next
+[0m← [0mWrite tests/test_sqlite_store.py
+Created file successfully: tests/test_sqlite_store.py
+> build · qwen-flash-next
+[0m→ [0mRead todo/cli.py 
+> build · qwen-flash-next
+[0m← [0mWrite README.md
+Wrote file successfully: README.md
+> build · qwen-flash-next
+[0m← [0mEdit tests/test_sqlite_store.py
+Index: tests/test_sqlite_store.py
+===================================================================
+--- tests/test_sqlite_store.py
++++ tests/test_sqlite_store.py
+@@ -65,8 +65,17 @@
+     with pytest.raises(KeyError):
+         svc.rename(999, "nope")
+ 
+ 
++def test_cli_default_path_is_sqlite(monkeypatch, tmp_path: Path):
++    import os
++    from todo.cli import default_path
++    monkeypatch.setenv("TODO_FILE", str(tmp_path / "env.db"))
++    assert default_path() == tmp_path / "env.db"
++    monkeypatch.delenv("TODO_FILE")
++    assert default_path() == Path.home() / ".todo.db"
++
++
+ def test_cli_rename(tmp_path: Path, capsys):
+     from todo.cli import main
+     f = str(tmp_path / "t.db")
+     main(["--file", f, "add", "old title"])
+
+> build · qwen-flash-next
+[0m$ [0m$HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q
+..........                                                               [100%]
+10 passed in 0.03s
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-r1/repo && PY=$HOME/local-ai/harness/tasks/.venv/bin/python
+# Req 3: revert default to .todo.json -> default-path test must fail
+sed -i '' 's|".todo.db"|".todo.json"|' todo/cli.py
+$PY -m pytest -q tests/test_sqlite_store.py::test_cli_default_path_is_sqlite 2>&1 | tail -1
+git checkout todo/cli.py 2>/dev/null || true
+# restore open_store usage that git checkout may have reverted
+grep -c open_store todo/cli.py
+1 failed in 0.01s
+0
+> build · qwen-flash-next
+[0m← [0mWrite todo/cli.py
+Wrote file successfully: todo/cli.py
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-r1/repo && git status --short && $HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q
+M README.md
+ M todo/cli.py
+ M todo/service.py
+ M todo/storage.py
+?? tests/__pycache__/
+?? tests/test_sqlite_store.py
+?? todo/__pycache__/
+?? todo/sqlite_store.py
+..........                                                               [100%]
+10 passed in 0.02s
+> build · qwen-flash-next
+[0m⚙ [0mexecute {"code":"\nconst PY = \"$HOME/local-ai/harness/tasks/.venv/bin/python\"\nasync function sh(cmd) {\n  const r = await fetch(\"http://localhost:0/none\").catch(() => null) // no-op\n  return null\n}\n// can't shell from execute; just plan checks instead\nreturn \"n/a\"\n"} 
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-r1/repo && cp todo/cli.py /tmp/cli.bak && cp todo/storage.py /tmp/storage.bak && cp todo/service.py /tmp/service.bak && PY=$HOME/local-ai/harness/tasks/.venv/bin/python
+run() { $PY -m pytest -q tests/test_sqlite_store.py 2>&1 | tail -1; mv /tmp/cli.bak todo/cli.py; mv /tmp/storage.bak todo/storage.py; mv /tmp/service.bak todo/service.py; }
+
+# Req 3a: default back to .todo.json
+sed -i '' 's|".todo.db"|".todo.json"|' todo/cli.py; cp todo/cli.py /tmp/cli.bak; echo "R3-default: $(run)"
+
+# Req 3b: CLI bypasses factory (always JsonStore)
+sed -i '' 's|open_store(Path(args.file))|JsonStore(Path(args.file))|; s|from .storage import open_store|from .storage import open_store, JsonStore|' todo/cli.py; cp todo/cli.py /tmp/cli.bak; echo "R3-openstore: $(run)"
+
+# Req 2: factory always returns JsonStore
+sed -i '' 's|return SqliteStore(path)|return JsonStore(path)|' todo/storage.py; cp todo/storage.py /tmp/storage.bak; echo "R2-factory: $(run)"
+R3-default: 1 failed, 6 passed in 0.02s
+mv: /tmp/storage.bak: No such file or directory
+mv: /tmp/service.bak: No such file or directory
+R3-openstore: 2 failed, 5 passed in 0.02s
+mv: /tmp/cli.bak: No such file or directory
+mv: /tmp/service.bak: No such file or directory
+R2-factory: 3 failed, 4 passed in 0.02s
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-r1/repo && git checkout todo/cli.py todo/storage.py todo/service.py && head -20 todo/cli.py
+Updated 3 paths from the index
+from __future__ import annotations
+import argparse
+import os
+import sys
+from pathlib import Path
+from .storage import JsonStore
+from .service import TodoService
+
+
+def default_path() -> Path:
+    return Path(os.environ.get("TODO_FILE", Path.home() / ".todo.json"))
+
+
+def build_service(args) -> TodoService:
+    return TodoService(JsonStore(Path(args.file)))
+
+
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(prog="todo")
+    p.add_argument("--file", default=str(default_path()), help="storage path")
+> build · qwen-flash-next
+[0m← [0mWrite todo/cli.py
+Wrote file successfully: todo/cli.py
+> build · qwen-flash-next
+[0m→ [0mRead todo/storage.py 
+[0m→ [0mRead todo/service.py 
+> build · qwen-flash-next
+[0m← [0mEdit todo/storage.py
+Index: todo/storage.py
+===================================================================
+--- todo/storage.py
++++ todo/storage.py
+@@ -20,4 +20,14 @@
+         self.path.write_text(json.dumps([t.to_dict() for t in tasks], indent=2))
+ 
+     def next_id(self, tasks: list[Task]) -> int:
+         return (max((t.id for t in tasks), default=0) + 1)
++
++
++def open_store(path: str | Path):
++    """Return the store matching the extension: JsonStore for .json, SqliteStore otherwise."""
++    from .sqlite_store import SqliteStore
++
++    path = Path(path)
++    if path.suffix == ".json":
++        return JsonStore(path)
++    return SqliteStore(path)
+
+[0m← [0mEdit todo/service.py
+Index: todo/service.py
+===================================================================
+--- todo/service.py
++++ todo/service.py
+@@ -35,4 +35,13 @@
+         new = [t for t in tasks if t.id != task_id]
+         if len(new) == len(tasks):
+             raise KeyError(task_id)
+         self.store.save(new)
++
++    def rename(self, task_id: int, new_title: str) -> Task:
++        tasks = self.store.load()
++        for t in tasks:
++            if t.id == task_id:
++                t.title = new_title
++                self.store.save(tasks)
++                return t
++        raise KeyError(task_id)
+
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-r1/repo && $HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q
+..........                                                               [100%]
+10 passed in 0.02s
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-r1/repo && PY=$HOME/local-ai/harness/tasks/.venv/bin/python
+
+# Req 1: force done to 0 on save -> roundtrip test must fail
+cp todo/sqlite_store.py /tmp/mut.bak
+sed -i '' 's|int(t.done)|0|' todo/sqlite_store.py
+echo "R1-sqlite: $($PY -m pytest -q tests/test_sqlite_store.py 2>&1 | tail -1)"
+mv /tmp/mut.bak todo/sqlite_store.py
+
+# Req 2: factory returns JsonStore for .db too
+cp todo/storage.py /tmp/mut.bak
+sed -i '' 's|return SqliteStore(path)|return JsonStore(path)|' todo/storage.py
+echo "R2-factory: $($PY -m pytest -q tests/test_sqlite_store.py 2>&1 | tail -1)"
+mv /tmp/mut.bak todo/storage.py
+
+# Req 4: drop non-empty check -> migrate guard test must fail
+cp todo/cli.py /tmp/mut.bak
+sed -i '' 's|if dst.load():|if False:|' todo/cli.py
+echo "R4-migrate: $($PY -m pytest -q tests/test_sqlite_store.py 2>&1 | tail -1)"
+mv /tmp/mut.bak todo/cli.py
+
+# Req 5: rename raises nothing for unknown id -> rename test must fail
+cp todo/service.py /tmp/mut.bak
+sed -i '' 's|        raise KeyError(task_id)$|        return None|; ' todo/service.py
+echo "R5-rename: $($PY -m pytest -q tests/test_sqlite_store.py::test_rename 2>&1 | tail -1)"
+mv /tmp/mut.bak todo/service.py
+R1-sqlite: 1 failed, 6 passed in 0.02s
+R2-factory: 2 failed, 5 passed in 0.02s
+R4-migrate: 1 failed, 6 passed in 0.02s
+R5-rename: 1 failed in 0.01s
+> build · qwen-flash-next
+[0m$ [0mcd $HOME/local-ai/harness/runs/opencode-b-feature-r1/repo && git diff --stat && $HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q
+README.md       |  5 ++++-
+ todo/cli.py     | 22 +++++++++++++++++++---
+ todo/service.py |  9 +++++++++
+ todo/storage.py | 10 ++++++++++
+ 4 files changed, 42 insertions(+), 4 deletions(-)
+..........                                                               [100%]
+10 passed in 0.02s
+> build · qwen-flash-next

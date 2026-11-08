@@ -1,0 +1,15 @@
+Now add the regression tests:
+The `-(45.00)` case has the minus *outside* the parentheses — need to detect that combination too:
+All 8 tests pass. Summary of changes in `ledger/core.py`:
+
+1. **`parse_amount` accounting negatives** — previously `-(45.00)` toggled the sign back to positive and `(-45.00)` did the same via XOR logic. Now:
+   - `"(45.00)"` → `Decimal("-45.00")` (unchanged, still works)
+   - Any combination of a minus sign with parentheses (`-(45.00)`, `(-45.00)`) raises `ValueError` instead of silently producing a positive value.
+
+2. **`Ledger.between`** — changed `start <= e.day < end` to `start <= e.day <= end`, matching the documented inclusive-on-both-ends behavior.
+
+3. **`monthly_totals`** — key format changed from `f"{year}-{month}"` to `f"{year:04d}-{month:02d}"`, producing zero-padded `YYYY-MM` keys that sort correctly as strings (e.g. `2026-03` before `2026-11`).
+
+4. **`apply_discount`** — confirmed already correct: `19.99 × 0.85 = 16.9915` quantizes half-up to `16.99`; no change made, and a regression test pins this behavior.
+
+Added four regression tests in `tests/test_core.py` (`test_parse_accounting_negative`, `test_between_inclusive_on_both_ends`, `test_monthly_totals_zero_padded_sorted_keys`, `test_discount_half_up_rounding`). All four original tests still pass — 8/8 total.

@@ -1,0 +1,8 @@
+All 9 tests pass. Summary of fixes in `ledger/core.py`:
+
+1. **`parse_amount`** — `-(45.00)` (and `( -45.00)`) now raise `ValueError` instead of flipping the sign or leaking `decimal.InvalidOperation`; `Decimal` conversion errors are wrapped in `ValueError`. `(45.00)` still returns `Decimal("-45.00")`.
+2. **`Ledger.between`** — changed `start <= e.day < end` to `start <= e.day <= end` (inclusive on both ends, matching the docstring).
+3. **`monthly_totals`** — key format changed to `f"{e.day.year:04d}-{e.day.month:02d}"` so keys are zero-padded and sort correctly as strings.
+4. **`apply_discount`** — verified already correct: `apply_discount(Decimal("19.99"), Decimal("15"))` → `Decimal("16.99")`; added a regression test to lock it in.
+
+Regression tests added in `tests/test_core.py`: `test_parse_accounting_negative`, `test_parse_accounting_negative_with_minus_is_invalid`, `test_between_includes_end_date`, `test_monthly_totals_zero_padded_and_sorted`, `test_discount_half_up_rounding`.

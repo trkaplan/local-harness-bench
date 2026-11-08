@@ -1,0 +1,26 @@
+Now the tests:
+My test expectation was wrong — `next_id` is computed from the current list (after the removal, max id is 1), matching `JsonStore` semantics. Fixing the test:
+All 14 tests pass (3 pre-existing + 11 new). Quick manual smoke test of the CLI:
+Everything works end-to-end. Final full test run:
+Done. Full suite passes: **14 passed** (3 pre-existing + 11 new).
+
+## Changes
+
+**`todo/sqlite_store.py`** (new) — `SqliteStore(path)` with the same interface as `JsonStore`:
+- `load()` reads from the `tasks` table (columns exactly as specified, `tags` JSON-decoded), ordered by id
+- `save()` replaces the full contents atomically — `DELETE` + `INSERT`s in one `sqlite3` connection context (single transaction, rolls back on error)
+- `next_id()` identical to `JsonStore` (`max+1`, or 1 when empty)
+- Standard library only (`sqlite3`, `json`)
+
+**`todo/storage.py`** — added `open_store(path)` factory: `.json` suffix → `JsonStore`, anything else → `SqliteStore`.
+
+**`todo/cli.py`**:
+- Default `--file` is now `~/.todo.db` (still overridable via `TODO_FILE`); all commands go through `open_store`, so `--file x.json` still uses JSON
+- New `migrate SRC DST` subcommand: checks destination first — if non-empty prints `destination not empty` to stderr and exits 1 without touching it; otherwise copies all tasks preserving ids/done/created_at/tags and prints `migrated N tasks`
+- New `rename ID TITLE` subcommand printing `renamed #ID` (exit 1 + `no task #ID` for unknown ids)
+
+**`todo/service.py`** — `TodoService.rename(task_id, new_title)` returns the updated `Task`, raises `KeyError` for unknown ids.
+
+**`tests/test_sqlite.py`** (new) — 11 tests covering: SQLite roundtrip/persistence, tags stored as JSON in the column, `next_id` semantics, the factory for both backends and extension-less paths, service + CLI rename (including unknown id), migrate JSON→SQLite and SQLite→JSON with full field preservation, non-empty destination failure (verified destination is unmodified), and that the CLI default path now creates a SQLite DB.
+
+**`README.md`** — describes the new SQLite default, extension-based backend selection, `rename`, and `migrate`.

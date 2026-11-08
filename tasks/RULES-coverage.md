@@ -1,0 +1,1 @@
+Before you finish, go through every numbered requirement in the task and make sure at least one test would fail if that requirement were removed. One focused test per requirement is enough: do not add tests beyond that, do not duplicate checks, and keep the diff minimal and in the existing code style.

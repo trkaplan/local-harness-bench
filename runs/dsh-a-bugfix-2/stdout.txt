@@ -1,0 +1,25 @@
+All three bugs fixed in `ledger/core.py`, with a regression test for each in `tests/test_core.py`. **8/8 tests pass** (`python -m pytest -q`).
+
+## Fixes
+
+**1. `parse_amount` — accounting negative + minus sign** (`ledger/core.py:17`)
+The `negative = not negative` toggle made `-(45.00)` flip back to *positive*, and since the `-` was stripped before `Decimal(s)` ran, the actual failure was `InvalidOperation` leaking out of `Decimal` — not a `ValueError`. Now a minus sign after accounting parentheses raises `ValueError`, and `Decimal()` conversion failures are wrapped into `ValueError` too (`InvalidOperation` is an `ArithmeticError`, and notably a `ValueError` *subclass*, so wrapping is what makes the contract explicit). `"(45.00)" → Decimal("-45.00")` is preserved, as are `"-45.00"`, `"(1,234.50)"`, `"€ 3.10"`.
+
+**2. `Ledger.between` — end exclusion** (`ledger/core.py:65`)
+`start <= e.day < end` → `start <= e.day <= end`, matching the documented inclusive docstring.
+
+**3. `monthly_totals` — key padding** (`ledger/core.py:68`)
+`f"{e.day.year}-{e.day.month}"` → `f"{e.day.year:04d}-{e.day.month:02d}"`. This also silently broke ordering, not just formatting: `"2026-3" > "2026-10"` as strings, so October sorted before March. Zero-padding makes the existing `dict(sorted(...))` produce correct ascending order.
+
+**4. `apply_discount`** — already correct; `Decimal("19.99") × 0.85 = 16.9915` rounds half-up to `16.99`. Left untouched and added `test_discount_half_up_to_cents` as a guard against future rounding-mode regressions.
+
+No public names or signatures changed (verified: no `def` lines in the diff).
+
+## A note on how I validated this
+
+My first verification pass was unsound and I caught it mid-task, which is worth flagging since it affects how much you should trust the "verified" claim:
+
+- My hand-written revert snippets didn't match the original source, so the replace was a **silent no-op** — the "failing" test was actually running the *fixed* code. Two of three validations were meaningless.
+- Worse, bug 1's test passed against the buggy code for a subtle reason: `decimal.InvalidOperation` **is** a `ValueError` subclass, so `pytest.raises(ValueError)` accepted the wrong exception type.
+
+I redid it by reverting from `git show HEAD:ledger/core.py` and asserting on `diff` output that each revert differed from HEAD by exactly the intended line. With that in place, all three regression tests genuinely fail on the original code and pass on the fixed code, and test 1 now asserts `type(excinfo.value) is ValueError` so it can't be satisfied by a leaked `InvalidOperation`.

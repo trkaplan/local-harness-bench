@@ -1,0 +1,202 @@
+[0m
+> build · qwen-flash-next
+[0m→ [0mRead . 
+[0m✱ [0mGlob "**/*.py" [90m3 matches[0m
+> build · qwen-flash-next
+[0m→ [0mRead ledger/core.py 
+[0m→ [0mRead tests/test_core.py 
+> build · qwen-flash-next
+[0m→ [0mRead ledger/__init__.py 
+> build · qwen-flash-next
+[0m← [0mEdit ledger/core.py
+Index: ledger/core.py
+===================================================================
+--- ledger/core.py
++++ ledger/core.py
+@@ -19,9 +19,12 @@
+     s = text.strip()
+     negative = False
+     if s.startswith("(") and s.endswith(")"):
+         negative = True
+-        s = s[1:-1]
++        s = s[1:-1].strip()
++        if s.startswith("-"):
++            # '-(45.00)' mixes a minus sign with accounting parentheses: invalid.
++            raise ValueError(f"invalid amount: {text!r}")
+     s = s.replace(",", "").replace("€", "").replace("$", "").strip()
+     if s.startswith("-"):
+         negative = not negative
+         s = s[1:]
+
+[0m← [0mEdit ledger/core.py
+Index: ledger/core.py
+===================================================================
+--- ledger/core.py
++++ ledger/core.py
+@@ -56,9 +56,9 @@
+         return sorted({e.account for e in self.entries})
+ 
+     def between(self, start: date, end: date) -> list[Entry]:
+         """Entries with start <= day <= end (inclusive on both ends)."""
+-        return [e for e in self.entries if start <= e.day < end]
++        return [e for e in self.entries if start <= e.day <= end]
+ 
+ 
+ def monthly_totals(entries: list[Entry]) -> dict[str, Decimal]:
+     """Map 'YYYY-MM' -> sum of amounts for that month, keys sorted ascending."""
+
+[0m← [0mEdit ledger/core.py
+Index: ledger/core.py
+===================================================================
+--- ledger/core.py
++++ ledger/core.py
+@@ -63,7 +63,7 @@
+ def monthly_totals(entries: list[Entry]) -> dict[str, Decimal]:
+     """Map 'YYYY-MM' -> sum of amounts for that month, keys sorted ascending."""
+     out: dict[str, Decimal] = {}
+     for e in entries:
+-        key = f"{e.day.year}-{e.day.month}"
++        key = f"{e.day.year:04d}-{e.day.month:02d}"
+         out[key] = out.get(key, Decimal(0)) + e.amount
+     return dict(sorted(out.items()))
+
+> build · qwen-flash-next
+[0m← [0mEdit tests/test_core.py
+Index: tests/test_core.py
+===================================================================
+--- tests/test_core.py
++++ tests/test_core.py
+@@ -20,4 +20,43 @@
+ 
+ 
+ def test_discount_basic():
+     assert apply_discount(Decimal("100"), Decimal("10")) == Decimal("90.00")
++
++
++def test_parse_accounting_negative_parens():
++    # Accounting-style negative stays negative.
++    assert parse_amount("(45.00)") == Decimal("-45.00")
++
++
++def test_parse_minus_with_parens_is_invalid():
++    # '-(45.00)' mixes minus sign with accounting parentheses: must be rejected.
++    import pytest
++
++    with pytest.raises(ValueError):
++        parse_amount("-(45.00)")
++
++
++def test_between_includes_end_date():
++    l = Ledger()
++    l.add(Entry(date(2026, 1, 3), "cash", Decimal("10")))
++    l.add(Entry(date(2026, 1, 5), "cash", Decimal("20")))
++    l.add(Entry(date(2026, 1, 9), "cash", Decimal("30")))
++    result = l.between(date(2026, 1, 3), date(2026, 1, 5))
++    assert [e.amount for e in result] == [Decimal("10"), Decimal("20")]
++
++
++def test_monthly_totals_zero_padded_sorted_keys():
++    entries = [
++        Entry(date(2026, 3, 5), "cash", Decimal("5")),
++        Entry(date(2025, 12, 1), "cash", Decimal("7")),
++        Entry(date(2026, 3, 20), "cash", Decimal("8")),
++    ]
++    totals = monthly_totals(entries)
++    assert list(totals.keys()) == ["2025-12", "2026-03"]
++    assert totals["2026-03"] == Decimal("13")
++    assert totals["2025-12"] == Decimal("7")
++
++
++def test_discount_half_up_rounding():
++    # 19.99 * 0.85 = 16.9915 -> 16.99 (half up to cents)
++    assert apply_discount(Decimal("19.99"), Decimal("15")) == Decimal("16.99")
+
+> build · qwen-flash-next
+[0m$ [0m$HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q
+.....F...                                                                [100%]
+=================================== FAILURES ===================================
+___________________ test_parse_minus_with_parens_is_invalid ____________________
+
+    def test_parse_minus_with_parens_is_invalid():
+        # '-(45.00)' mixes minus sign with accounting parentheses: must be rejected.
+        import pytest
+    
+        with pytest.raises(ValueError):
+>           parse_amount("-(45.00)")
+
+tests/test_core.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+text = '-(45.00)'
+
+    def parse_amount(text: str) -> Decimal:
+        """Parse amounts like '1,234.50', '-12', '(45.00)' (accounting negative), '€ 3.10'."""
+        s = text.strip()
+        negative = False
+        if s.startswith("(") and s.endswith(")"):
+            negative = True
+            s = s[1:-1].strip()
+            if s.startswith("-"):
+                # '-(45.00)' mixes a minus sign with accounting parentheses: invalid.
+                raise ValueError(f"invalid amount: {text!r}")
+        s = s.replace(",", "").replace("€", "").replace("$", "").strip()
+        if s.startswith("-"):
+            negative = not negative
+            s = s[1:]
+>       value = Decimal(s)
+                ^^^^^^^^^^
+E       decimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]
+
+ledger/core.py:31: InvalidOperation
+=========================== short test summary info ============================
+FAILED tests/test_core.py::test_parse_minus_with_parens_is_invalid - decimal....
+1 failed, 8 passed in 0.01s
+> build · qwen-flash-next
+[0m← [0mEdit ledger/core.py
+Index: ledger/core.py
+===================================================================
+--- ledger/core.py
++++ ledger/core.py
+@@ -17,19 +17,28 @@
+ def parse_amount(text: str) -> Decimal:
+     """Parse amounts like '1,234.50', '-12', '(45.00)' (accounting negative), '€ 3.10'."""
+     s = text.strip()
+     negative = False
+-    if s.startswith("(") and s.endswith(")"):
++    if s.startswith("-"):
++        # A leading minus cannot combine with accounting parentheses: '-(45.00)' is invalid.
+         negative = True
+-        s = s[1:-1].strip()
+-        if s.startswith("-"):
+-            # '-(45.00)' mixes a minus sign with accounting parentheses: invalid.
++        s = s[1:].strip()
++        if s.startswith("("):
+             raise ValueError(f"invalid amount: {text!r}")
++    elif s.startswith("(") and s.endswith(")"):
++        negative = True
++        s = s[1:-1].strip()
+     s = s.replace(",", "").replace("€", "").replace("$", "").strip()
+     if s.startswith("-"):
+-        negative = not negative
++        if negative:
++            # A second minus sign (e.g. '12.-3') is not a valid amount.
++            raise ValueError(f"invalid amount: {text!r}")
++        negative = True
+         s = s[1:]
+-    value = Decimal(s)
++    try:
++        value = Decimal(s)
++    except ArithmeticError as exc:
++        raise ValueError(f"invalid amount: {text!r}") from exc
+     return -value if negative else value
+ 
+ 
+ def apply_discount(amount: Decimal, percent: Decimal) -> Decimal:
+
+> build · qwen-flash-next
+[0m$ [0m$HOME/local-ai/harness/tasks/.venv/bin/python -m pytest -q
+.........                                                                [100%]
+9 passed in 0.00s
+> build · qwen-flash-next
+[0m→ [0mRead ledger/core.py 
+> build · qwen-flash-next

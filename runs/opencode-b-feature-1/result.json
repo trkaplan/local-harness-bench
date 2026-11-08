@@ -1,0 +1,1 @@
+{"harness":"opencode","task":"b-feature","run":1,"exit":0,"wall_s":81,"llm_calls":17,"prompt_tokens":212204,"completion_tokens":4961,"length_finishes":0,"hidden_pass":true,"hidden_summary":"11 passed in 0.03s","visible_pass":true,"visible_summary":"17 passed in 0.02s","external_conns":0,"started":"2026-11-08T13:29:00"}

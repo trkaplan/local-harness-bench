@@ -1,0 +1,1 @@
+Before you finish, check that every numbered requirement in the task has at least one direct test of its own. One focused test per requirement is enough: do not duplicate checks or add tests beyond that, and keep the diff minimal and in the existing code style.
