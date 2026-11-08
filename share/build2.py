@@ -11,12 +11,12 @@ T={"tr":dict(title="Hangi kodlama harness'ı lokal Qwen'i en iyi sürüyor?",sub
   rows=[("Süre","saniye"),("Prompt token","bin"),("Diff boyutu","eklenen satır"),("Kod kalitesi","12 üzerinden, kör inceleme")],
   lA="Bug fix (7 test)",lB="Feature: SQLite backend + migrate + rename (11 test)",
   foot="Pi v1.5.0 · opencode v2.2.6 · mini-swe-agent v2.4.6 · deepseek-harness 0.2.2-rc.1 · kaynaktan derlendi, telemetri kapalı · kalite: 2 bağımsız kör Claude puanlayıcı; rubric: sağlamlık, test kapsamı, test kalitesi, doküman, spec'e sadakat, tutarlılık",
-  b1="⚡ EN HIZLI",b2="💰 EN VERİMLİ"),
+  b1="⚡ EN HIZLI",b2="💰 TOKEN BAŞINA EN İYİ KALİTE"),
  "en":dict(title="Which coding-agent harness drives a local Qwen best?",sub="Qwen3.8-Flash-Next · M5 Max 128 GB · ~78 tok/s",
   rows=[("Time","seconds"),("Prompt tokens","thousands"),("Diff size","lines added"),("Code quality","out of 12, blind review")],
   lA="Bug fix (7 tests)",lB="Feature: SQLite backend + migrate + rename (11 tests)",
   foot="Pi v1.5.0 · opencode v2.2.6 · mini-swe-agent v2.4.6 · deepseek-harness 0.2.2-rc.1 · built from source, telemetry off · quality: 2 independent blind Claude graders; rubric: robustness, spec coverage, test quality, docs, spec fidelity, consistency",
-  b1="⚡ FASTEST",b2="💰 BEST VALUE")}
+  b1="⚡ FASTEST",b2="💰 BEST QUALITY PER TOKEN")}
 TPL='''<!doctype html><html><head><meta charset="utf-8"><style>
 :root{--surface:#1a1a19;--t1:#f0efec;--t2:#c3c2b7;--t3:#8a897f;--grid:#33332f;--s1:#3987e5;--s2:#d95926}
 *{box-sizing:border-box;margin:0}
