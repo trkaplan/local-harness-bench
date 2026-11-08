@@ -30,14 +30,14 @@ svg{width:100%%;flex:1;margin-top:22px}
 text{font-family:inherit}
 </style></head><body>
 <h1>%(title)s</h1><div class="sub">%(sub)s</div>
-<svg id="g" viewBox="0 0 1472 680" preserveAspectRatio="xMinYMin meet"></svg>
+<svg id="g" viewBox="0 0 1472 660" preserveAspectRatio="xMinYMin meet"></svg>
 <div class="legend"><span><i style="background:var(--s1)"></i>%(lA)s</span><span><i style="background:var(--s2)"></i>%(lB)s</span></div>
 <div class="foot"><span>%(foot)s</span><span style="white-space:nowrap">2026-11-08</span></div>
 <script>
 const H=%(H)s, M=%(M)s, ROWS=%(rows)s, badges={0:[0,"%(b1)s"],1:[1,"%(b2)s"]};
 const keys=["time","tok","lines","qual"], fmt=[v=>v+" s",v=>v+"K",v=>v,v=>v.toFixed(1)];
 const css=getComputedStyle(document.documentElement),c=k=>css.getPropertyValue(k);
-const W=1472,PLOTW=1000,X0=(W-PLOTW)/2,TOP=10,ROWH=160,COLW=PLOTW/4,BW=54,GAP=2,HEAD=40,BASE=10;
+const W=1472,PLOTW=1000,X0=0,TOP=44,ROWH=150,COLW=PLOTW/4,BW=54,GAP=2,HEAD=40,BASE=10;
 let s="";
 keys.forEach((k,r)=>{const d=M[k];const y0=TOP+r*ROWH, plotH=ROWH-HEAD-BASE-26, base=y0+HEAD+plotH;
  const max=k==="qual"?12.3:Math.max(...d.A,...d.B)*1.02;
@@ -47,7 +47,7 @@ keys.forEach((k,r)=>{const d=M[k];const y0=TOP+r*ROWH, plotH=ROWH-HEAD-BASE-26, 
   [["A","--s1",-BW-GAP/2],["B","--s2",GAP/2]].forEach(([t,col,off])=>{const v=d[t][i],hh=Math.max(3,plotH*v/max),x=cx+off,y=base-hh;
    s+=`<path d="M${x},${base} V${y+4} a4,4 0 0 1 4,-4 H${x+BW-4} a4,4 0 0 1 4,4 V${base} Z" fill="${c(col)}"/>`;
    s+=`<text x="${x+BW/2}" y="${y-7}" text-anchor="middle" font-size="15" fill="${c('--t2')}">${fmt[r](v)}</text>`;});
-  if(r===3){s+=`<text x="${cx}" y="${base+26}" text-anchor="middle" font-size="19" font-weight="600" fill="${c('--t1')}">${h}</text>`;}
+  if(r===0){s+=`<text x="${cx}" y="22" text-anchor="middle" font-size="20" font-weight="700" fill="${c('--t1')}">${h}</text>`;}
   if(badges[r]&&badges[r][0]===i){s+=`<text x="${cx}" y="${base+21}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${c('--s1')}">${badges[r][1]}</text>`;}
  });});
 document.getElementById("g").innerHTML=s;
